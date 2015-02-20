@@ -1,4 +1,6 @@
 
+
+
 (defun c:ssname()
 	(vl-load-com)
 	
@@ -8,6 +10,167 @@
 	
 	(princ)
 )
+
+
+(defun c:deleteall( / layerName typeBlock qtd)
+	(setvar "cmdecho" 0)
+	(command "_osnap" "none")
+	(vl-load-com)
+	(setq obj (ssget))
+	(if (/= obj nil)
+		(progn
+			(setq obj (ssname obj 0))
+			(setq valid_option nil)
+			(while (= valid_option nil)
+				
+				(princ "\n### Comandos disponíveis ###")
+				(princ "\nTem certeza que deseja excluir os itens?")
+				(princ "\n[p] - Prosseguir")
+				(princ "\n[c] - Cancelar")
+				(princ "\n[s] - Sair")
+				(princ "\nDigite a opção: ")
+				
+				(setq opcao (getstring))
+				(setq valid_option (verifica_opcoes_escolha_string opcao (list "P" "C" "S")))
+				(if (= valid_option nil )
+					(progn
+						(princ "\n### Opção inválida! ###")
+					)
+					(progn
+						;Se for diferente de sair
+						(if (and (/= (strcase opcao) "S" )(/= (strcase opcao) "C" ) )
+							(progn
+								
+								(if (= (strcase opcao) "P" )
+									(progn
+										(setq layerName (cdr (assoc 8 (entget obj))))
+										(setq typeBlock (cdr (assoc 0 (entget obj))))
+										
+										(setq SELECAO (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+										
+										(if (/= SELECAO nil)
+											(progn
+												(setq qtd (sslength all))
+												(sam_delete SELECAO)
+												(princ (strcat "\nForam excluídos " (itoa qtd) " objetos."))
+											)
+											(progn
+												(alert "Nenhum item foi excluído")
+											)
+										)
+										
+									)
+								)
+								
+							)
+							(progn
+								(princ "\nSaindo da aplicação...")
+							)
+						)
+					)
+				)
+			)
+			
+		)
+		(progn
+			(alert "Nenhum objeto selecionado")
+		)
+	)
+	
+	(princ)
+)
+
+
+(defun f_nao_configurado()
+	(command "layer" "m" "Nao_Configurado" "c" "green" "" "")
+	(command "circle" (list x y 0) 11)
+	(command "circle" (list x y 0) 12)
+)
+
+(defun f_tudo_ok()
+	(command "layer" "m" "Configurado_Ok" "c" "yellow" "" "")
+	(command "circle" (list x y 0) 5)
+	(command "circle" (list x y 0) 6)
+)
+
+
+
+(defun f_numeracao_dos_blocos_incompativeis()
+	(command "layer" "m" "Divergencia_Valores_incopativeis" "c" "133" "" "")
+	(command "circle" (list x y 0) 7)
+	(command "circle" (list x y 0) 8)
+)
+
+
+(defun f_nome_dos_blocos_incompativeis()
+	(command "layer" "m" "Nomes_dos_blocos_incopativeis" "c" "190" "" "")
+	(command "circle" (list x y 0) 9)
+	(command "circle" (list x y 0) 10)
+)
+
+
+(defun carrega_lista_posicao_tap()
+	(setq all (ssget "x" (List (cons -4 "<OR") (cons 8 "NET-TAP")  (cons 8 "DC")  (cons -4 "OR>") )))
+	;(setq all (ssget "x" '((-4 . "<AND") (8 . "ESPECIAL")(0 . "TEXT")(-4 . "AND>"))))
+	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+	(setq lista_posicao_tap nil)
+	(if (/= all nil)
+		(progn
+			(setq qtd (- (sslength all) 1))
+			(while (>= qtd 0)
+				(setq obj (ssname all qtd))
+				(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
+				(setq coord (cdr (assoc 10 (entget obj))))
+				(setq x1 (rtos (car coord) 2 3))
+				(setq y1 (rtos (cadr coord) 2 3))
+				
+				(setq lista_posicao_tap (cons (list (strcat x1 y1) obj  ) lista_posicao_tap))
+				
+				
+				(setq qtd (- qtd 1))
+			)
+		)
+	)
+	
+)
+
+
+
+
+
+
+(defun sam_delete(o)
+	(command "erase" o "")
+)
+
+
+
+(defun configura_lista(lista)
+	(setq comprimento_array (length lista))
+	(setq lista1 nil)
+	(while (> comprimento_array 0)
+		
+		(setq elem (nth (- comprimento_array 1)  lista ) )
+		
+		
+		(setq lista1 (cons (list elem) lista1))
+		
+		(setq comprimento_array (- comprimento_array 1))
+	)
+	
+	lista1
+)
+
+(defun verifica_opcoes_escolha_string(string_digitada opcoes)
+	(setq string_digitada (strcase string_digitada))
+	(setq opcoes (configura_lista opcoes))
+	
+	(setq check_value (assoc string_digitada opcoes))
+	
+	check_value
+)
+
+
 
 
 ;:: ViewExtents  coordenada dos zooms da tela  ===> retorna uma lista de coordenadas

@@ -101,12 +101,11 @@
 	(reverse (cons str lst))
 )
 
-
+;lista_informacoes - São as informações que relacionam o objeto informação,
+;com os objetos que ficam dentro da nuvem
 (defun carrega_arquivo()
  
 	(setq ARQUIVO_CSV (getfiled "Selecione o arquivo CSV" "c:" "csv" 0))
-	;(setq ARQUIVO_CSV (getfiled "Selecione o arquivo CSV" "//ipanema/logradouros/" "csv" 0))
-
 	(setq ARQUIVO_CSV (open ARQUIVO_CSV "r"))
 
 	(setq contador1 0)
@@ -118,12 +117,15 @@
 				 LISTA_LINHA nil
 				 LISTA_CSV nil
 			)
-
+			
+			;Percorrendo o csv do arquivo base
 			(while (/= LINHA_CSV nil)
 
 				(setq LISTA_LINHA (sparser LINHA_CSV ";"))
-
 				
+				;Procura a coordenada do arquivo base, na lista_informações*
+				;*lista_informações - São as informações que relacionam o objeto informação,
+				;com os objetos que ficam dentro da nuvem
 				(setq procura (assoc  (strcat (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA))  lista_informacoes ))
 				
 				;(assoc "700281.0317529290.421" lista_informacoes)
@@ -151,26 +153,17 @@
 								
 								(if (and (= Novo novoArray) (= Antigo antigoArray))
 									(progn
-										(command "layer" "m" "Configurado_Ok" "c" "yellow" "" "")
-										(command "circle" (list x y 0) 5)
-										(command "circle" (list x y 0) 6)
+										(f_tudo_ok)
 									)
 									(progn
-										;lista_informacoes
 										
-										;(command "zoom" "c" (nth 4 procura) 10)
-										;(getstring "Divergencia")
-										
-										(command "layer" "m" "Divergencia_Valores_incopativeis" "c" "133" "" "")
-										(command "circle" (list x y 0) 7)
-										(command "circle" (list x y 0) 8)
+										(f_numeracao_dos_blocos_incompativeis)
 									)
 								)
 							)
 							(progn
-								(command "layer" "m" "Nomes_dos_blocos_incopativeis" "c" "190" "" "")
-								(command "circle" (list x y 0) 9)
-								(command "circle" (list x y 0) 10)
+								;Gera os círculos no mapa, indicando que houve erro
+								(f_nome_dos_blocos_incompativeis)
 							)
 						)
 						
@@ -199,22 +192,16 @@
 										
 										(if (and (= Novo novoArray) (= Antigo antigoArray))
 											(progn
-												(command "layer" "m" "Configurado_Ok" "c" "yellow" "" "")
-												(command "circle" (list x y 0) 5)
-												(command "circle" (list x y 0) 6)
+												;Faz a marcacao no mapa indicando que está tudo ok
+												(f_tudo_ok)
 											)
 											(progn
-												(command "layer" "m" "Divergencia_Valores_incopativeis" "c" "133" "" "")
-												(command "circle" (list x y 0) 7)
-												(command "circle" (list x y 0) 8)
+												(f_numeracao_dos_blocos_incompativeis)
 											)
 										)
 									)
 									(progn
-										
-										(command "layer" "m" "Nomes_dos_blocos_incopativeis" "c" "190" "" "")
-										(command "circle" (list x y 0) 9)
-										(command "circle" (list x y 0) 10)
+										(f_nome_dos_blocos_incompativeis)
 										
 									)
 								)
@@ -222,9 +209,65 @@
 								
 							)
 							(progn
-								(command "layer" "m" "Nao_Configurado" "c" "green" "" "")
-								(command "circle" (list x y 0) 11)
-								(command "circle" (list x y 0) 12)
+								;Se chegou até esse ponto. Significa que o objeto não tem núvem.
+								;Ou seja, não foi alterado.
+								
+								
+								
+								(setq searchElement (assoc (strcat (nth 0 LISTA_LINHA)   (nth 1 LISTA_LINHA)) lista_posicao_tap))
+								;(setq x (atof (nth 0 LISTA_LINHA)))
+								;(setq y (atof (nth 1 LISTA_LINHA)))
+								
+								(if (/= searchElement nil)
+									(progn
+										
+										(setq valorTap (retorna_attrib (nth 1 searchElement) 1) )
+										(setq blockName3 (cdr (assoc 2 (entget (nth 1 searchElement)))))
+										(setq logErro 0)
+										;Verificando se os blocos possem os mesmos valores
+										(if (/= (vl-string-trim " "	(strcase blockName3))  (vl-string-trim " "	(strcase (nth 3 LISTA_LINHA)))   )
+											(progn
+												
+												(f_nome_dos_blocos_incompativeis)
+												(setq logErro 1)
+											)
+										)
+										
+										
+										
+										;Verificando se a numeração dos blocos são compatíveis
+										(if (/= (vl-string-trim " "	(strcase valorTap))  (vl-string-trim " "	(strcase (nth 2 LISTA_LINHA)))   )
+											(progn
+												
+												(f_numeracao_dos_blocos_incompativeis)
+												(setq logErro 1)
+											)
+										)
+										
+										
+										(if (= logErro 0)
+											(progn
+												;Faz a marcacao no mapa indicando que está tudo ok
+												(f_tudo_ok)
+											)
+										)
+										
+										
+										
+									)
+									(progn
+										
+										
+										(f_nao_configurado)
+										
+									)
+								)
+								
+								
+								
+								
+								
+								
 							)
 						)
 						
@@ -244,6 +287,7 @@
 	)
  
 )
+
 
 
 (defun forca_procura(x y)
@@ -708,7 +752,6 @@
 
 
 
-
 (load "C:\\arcitech1\\lisps_aux\\funcoes.lsp")
 
 (defun c:pp()
@@ -717,6 +760,8 @@
 	(vl-load-com)
 	
 	(relaciona_leaders)
+	
+	(carrega_lista_posicao_tap)
 	
 	(carrega_arquivo)
 	

@@ -146,12 +146,27 @@
 (defun carrega_arquivo()
  
 	(setq contador1 0)
-	
-	(setq info1 (assoc (nth 0 (nth 0 lista_informacoes)) lista_csv_save))
-	(setq LINHA_CSV (nth 1 info1))
-	(setq LISTA_LINHA (sparser LINHA_CSV ";"))
-	
-	(setq procura (assoc  (strcat (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA))  lista_informacoes ))
+	(setq procura nil)
+	(setq forcar_procura 1)
+	(if (/= lista_informacoes nil)
+		(progn
+			(setq info1 (assoc (nth 0 (nth 0 lista_informacoes)) lista_csv_save))
+			(setq LINHA_CSV (nth 1 info1))
+			(setq LISTA_LINHA (sparser LINHA_CSV ";"))
+			(setq procura (assoc  (strcat (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA))  lista_informacoes ))
+		)
+		(progn
+			
+			(setq coord (cdr (assoc 10 (entget tapObject))))
+			(setq x1 (rtos (car coord) 2 3))
+			(setq y1 (rtos (cadr coord) 2 3))
+			
+			(setq info1 (assoc (strcat x1 y1) lista_csv_save))
+			(setq LINHA_CSV (nth 1 info1))
+			(setq LISTA_LINHA (sparser LINHA_CSV ";"))
+			(setq forcar_procura 0)
+		)
+	)
 	
 	(setq x (atof (nth 0 LISTA_LINHA)))
 	(setq y (atof (nth 1 LISTA_LINHA)))
@@ -204,10 +219,14 @@
 		)
 		(progn
 			
-			
-			(setq procura (forca_procura  (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA) ))
-			
-			;(getstring "ldldld")
+			(if (= forcar_procura 1)
+				(progn
+					(setq procura (forca_procura  (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA) ))
+				)
+				(progn
+					(setq procura "")
+				)
+			)
 			
 			(if (/= procura "")
 				(progn
@@ -248,9 +267,69 @@
 					
 				)
 				(progn
-					(command "layer" "m" "Nao_Configurado" "c" "green" "" "")
-					(command "circle" (list x y 0) 11)
-					(command "circle" (list x y 0) 12)
+					
+					
+					(setq lista_posicao_tap nil)
+					(setq coord (cdr (assoc 10 (entget tapObject))))
+					(setq x1 (rtos (car coord) 2 3))
+					(setq y1 (rtos (cadr coord) 2 3))
+					(setq lista_posicao_tap (cons (list (strcat x1 y1) tapObject  ) lista_posicao_tap))
+					
+					
+					(setq searchElement (assoc (strcat (nth 0 LISTA_LINHA)   (nth 1 LISTA_LINHA)) lista_posicao_tap))
+					;(setq x (atof (nth 0 LISTA_LINHA)))
+					;(setq y (atof (nth 1 LISTA_LINHA)))
+					
+					(if (/= searchElement nil)
+						(progn
+							
+							(setq valorTap (retorna_attrib (nth 1 searchElement) 1) )
+							(setq blockName3 (cdr (assoc 2 (entget (nth 1 searchElement)))))
+							(setq logErro 0)
+							;Verificando se os blocos possem os mesmos valores
+							(if (/= (vl-string-trim " "	(strcase blockName3))  (vl-string-trim " "	(strcase (nth 3 LISTA_LINHA)))   )
+								(progn
+									
+									(f_nome_dos_blocos_incompativeis)
+									(setq logErro 1)
+								)
+							)
+							
+							
+							
+							;Verificando se a numeração dos blocos são compatíveis
+							(if (/= (vl-string-trim " "	(strcase valorTap))  (vl-string-trim " "	(strcase (nth 2 LISTA_LINHA)))   )
+								(progn
+									
+									(f_numeracao_dos_blocos_incompativeis)
+									(setq logErro 1)
+								)
+							)
+							
+							
+							(if (= logErro 0)
+								(progn
+									;Faz a marcacao no mapa indicando que está tudo ok
+									(f_tudo_ok)
+								)
+							)
+							
+							
+							
+						)
+						(progn
+							
+							
+							(f_nao_configurado)
+							
+						)
+					)
+					
+					
+					
+					
+					
+					
 				)
 			)
 			
@@ -524,6 +603,13 @@
 				
 				(setq qtd (- qtd 1))
 			)
+		)
+		(progn
+			
+			(princ "\nSelecione o objeto TAP")
+			(setq tapObject (ssget '((8 . "NET-TAP,DC"))))
+			(setq tapObject (ssname tapObject 0))
+			
 		)
 	)
 	
