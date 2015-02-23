@@ -21,6 +21,8 @@
 						(setq contador 1)
 						(setq sair 0)
 						(setq encontrados 0)
+						(setq coord1 nil)
+						(setq coord2 nil)
 						(while (or (= sair 0) (< encontrados 2))
 							
 							(setq elemento (nth contador (entget obj)))
@@ -91,7 +93,6 @@
 										
 									)
 								)
-								
 								
 							)
 							
@@ -173,6 +174,22 @@
 									)
 									(progn
 										;(getstring "zzzz")
+										
+										
+										(setq coordObj1  (nth 0 listaPontoPolyline2))
+												
+										(command "layer" "m" "Erro_encontrado" "c" "magenta" "" "")
+										(command "circle" coordObj1 10)
+										(command "circle" coordObj1 9)
+										(command "circle" coordObj1 8)
+										
+										(command "zoom" "c" coordObj1 12)
+										
+										(getstring "Não encontrou o objeto")
+										
+										(setq all3 (ssget "x" (List (cons 8 "layer_temporaria1"))))
+										(command "erase" all3 "")
+										
 									)
 								)
 							)
