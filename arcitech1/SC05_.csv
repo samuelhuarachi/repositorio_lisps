@@ -1,0 +1,126 @@
+Equipamentos;Part Number;Node
+Amplificadores;FLEX-MAX321e - MODULO;
+Amplificadores;FLEX-MAX321e - MOD + HOUSING;
+Amplificadores;FLEX-MAX601e - MODULO;
+Amplificadores;FLEX-MAX601e - MOD + HOUSING;
+Amplificadores;GS7000;
+Amplificadores;SG4000;
+Forward Pads;10-A- 0WC;
+Forward Pads;10-A- 1WC;
+Forward Pads;10-A- 2WC;
+Forward Pads;10-A- 3WC;
+Forward Pads;10-A- 4WC;
+Forward Pads;10-A- 5WC;
+Forward Pads;10-A- 6WC;
+Forward Pads;10-A- 7WC;
+Forward Pads;10-A- 8WC;
+Forward Pads;10-A- 9WC;
+Forward Pads;10-A- 10WC;
+Forward Pads;10-A- 11WC;
+Forward Pads;10-A- 12WC;
+Forward Pads;10-A- 13WC;
+Forward Pads;10-A- 14WC;
+Forward Pads;10-A- 15WC;
+Forward Pads;10-A- 16WC;
+Forward Pads;10-A- 17WC;
+Forward Pads;10-A- 18WC;
+Forward Pads;10-A- 19WC;
+Forward Pads;10-A- 20WC;
+Forward Pads;10-A- 21WC;
+Forward Pads;10-A- 22WC;
+Return Pads;10-A- 0WC;
+Return Pads;10-A- 1WC;
+Return Pads;10-A- 2WC;
+Return Pads;10-A- 3WC;
+Return Pads;10-A- 4WC;
+Return Pads;10-A- 5WC;
+Return Pads;10-A- 6WC;
+Return Pads;10-A- 7WC;
+Return Pads;10-A- 8WC;
+Return Pads;10-A- 9WC;
+Return Pads;10-A- 10WC;
+Return Pads;10-A- 11WC;
+Return Pads;10-A- 12WC;
+Return Pads;10-A- 13WC;
+Return Pads;10-A- 14WC;
+Return Pads;10-A- 15WC;
+Return Pads;10-A- 16WC;
+Return Pads;10-A- 17WC;
+Return Pads;10-A- 18WC;
+Return Pads;10-A- 19WC;
+Return Pads;10-A- 20WC;
+Forward Equalizers;P-1G-CS12;
+Forward Equalizers;P-1G-CS11;
+Forward Equalizers;P-1G-CS10;
+Forward Equalizers;P-1G-CS09;
+Forward Equalizers;P-1G-CS08;
+Forward Equalizers;P-1G-CS07;
+Forward Equalizers;P-1G-CS06;
+Forward Equalizers;P-1G-CS05;
+Forward Equalizers;P-1G-CS04;
+Forward Equalizers;P-1G-CS03;
+Forward Equalizers;P-1G-CS02;
+Forward Equalizers;P-1G-EQ02;
+Forward Equalizers;P-1G-EQ03;
+Forward Equalizers;P-1G-EQ04;
+Forward Equalizers;P-1G-EQ05;
+Forward Equalizers;P-1G-EQ06;
+Forward Equalizers;P-1G-EQ07;
+Forward Equalizers;P-1G-EQ08;
+Forward Equalizers;P-1G-EQ09;
+Forward Equalizers;P-1G-EQ10;
+Forward Equalizers;P-1G-EQ11;
+Forward Equalizers;P-1G-EQ12;
+Forward Equalizers;P-1G-EQ13;
+Forward Equalizers;P-1G-EQ14;
+Forward Equalizers;P-1G-EQ15;
+Forward Equalizers;P-1G-EQ16;
+Forward Equalizers;P-1G-EQ17;
+Forward Equalizers;P-1G-EQ18;
+Forward Equalizers;P-1G-EQ19;
+Forward Equalizers;P-1G-EQ20;
+Forward Equalizers;P-1G-EQ00;
+Return Equalizers;7-REF85/0;
+Return Equalizers;7-REF85/1;
+Return Equalizers;7-REF85/2;
+Return Equalizers;7-REF85/3;
+Return Equalizers;7-REF85/4;
+Return Equalizers;7-REF85/5;
+Return Equalizers;7-REF85/6;
+Return Equalizers;7-REF85/7;
+Return Equalizers;7-REF85/8;
+Taps - 8 Vias;RMT108-20;1
+Taps - 8 Vias;RMT108-12;5
+Taps - 8 Vias;RMT108-18;9
+Taps - 8 Vias;RMT108-21;19
+Taps - 2 Vias;RMT102-23;4
+Taps - 2 Vias;RMT102-8;5
+Taps - 4 Vias;RMT104-8;7
+Taps - 2 Vias;RMT102-11;9
+Taps - 4 Vias;RMT104-20;11
+Taps - 2 Vias;RMT102-20;7
+Taps - 8 Vias;RMT108-15;8
+Taps - 2 Vias;RMT102-14;14
+Taps - 4 Vias;RMT104-17;13
+Taps - 4 Vias;RMT104-14;8
+Taps - 2 Vias;RMT102-17;6
+Taps - 4 Vias;RMT104-23;6
+Taps - 4 Vias;RMT104-11;5
+Taps - 2 Vias;RMT102-4;3
+Couplers Externos;RLS10-2;5
+Couplers Externos;RLS10-3;1
+Couplers Externos;RLDC10-8;4
+Couplers Externos;RLDC10-12;1
+Couplers Externos;RLDC10-16;
+Couplers Internos;7-DC-4-5-1000;
+Couplers Internos;7-DC-8-5-1000;
+Couplers Internos;7-DC-12-5-1000;
+Fontes;LPI;
+Fontes;90V - 15A;
+EQ Linha;FFE-8-100N;
+Cabos;.500;1483.00
+Cabos;.750;
+Conectores;PIN-500;
+Conectores;PIN-750;
+HP;HP;
+KM (STRAND);KM (STRAND);

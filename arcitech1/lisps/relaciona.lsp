@@ -175,7 +175,6 @@
 									(progn
 										;(getstring "zzzz")
 										
-										
 										(setq coordObj1  (nth 0 listaPontoPolyline2))
 												
 										(command "layer" "m" "Erro_encontrado" "c" "magenta" "" "")

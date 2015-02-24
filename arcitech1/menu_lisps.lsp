@@ -56,11 +56,12 @@
 		(princ "\n[3] - Parte 3 - Verificar erros no mapa")
 		(princ "\n[4] - Verifica erros individualmente")
 		(princ "\n[5] - Números base")
+		(princ "\n[6] - Relatório")
 		(princ "\n[s] - Sair")
 		(princ "\nDigite a opção: ")
 		
 		(setq opcao (getstring))
-		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "S")))
+		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "S")))
 		(if (= valid_option nil )
 			(progn
 				(princ "\n### Opção inválida! ###")
@@ -106,6 +107,14 @@
 								(c:num1)
 							)
 						)
+						
+						(if (= (strcase opcao) "6" )
+							(progn
+								(load (strcat basePath "lisps\\preenche_planilha2.lsp"))
+								(c:rtt)
+							)
+						)
+						
 						
 						
 					)

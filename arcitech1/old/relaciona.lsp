@@ -1,131 +1,166 @@
 
 
-
-(defun c:ssname()
-	(vl-load-com)
+(defun relaciona_leaders()
 	
-	(setq selObj (ssget))
-	(setq selObj (ssname selObj 0))
-	(setq lista (entget selObj))
 	
-	(princ)
-)
-
-
-(defun c:deleteall( / layerName typeBlock qtd)
-	(setvar "cmdecho" 0)
-	(command "_osnap" "none")
-	(vl-load-com)
-	(setq obj (ssget))
-	(if (/= obj nil)
-		(progn
-			(setq obj (ssname obj 0))
-			(setq valid_option nil)
-			(while (= valid_option nil)
-				
-				(princ "\n### Comandos dispon√≠veis ###")
-				(princ "\nTem certeza que deseja excluir os itens?")
-				(princ "\n[p] - Prosseguir")
-				(princ "\n[c] - Cancelar")
-				(princ "\n[s] - Sair")
-				(princ "\nDigite a op√ß√£o: ")
-				
-				(setq opcao (getstring))
-				(setq valid_option (verifica_opcoes_escolha_string opcao (list "P" "C" "S")))
-				(if (= valid_option nil )
-					(progn
-						(princ "\n### Op√ß√£o inv√°lida! ###")
-					)
-					(progn
-						;Se for diferente de sair
-						(if (and (/= (strcase opcao) "S" )(/= (strcase opcao) "C" ) )
-							(progn
-								
-								(if (= (strcase opcao) "P" )
-									(progn
-										
-										(setq layerName (cdr (assoc 8 (entget obj))))
-										(setq typeBlock (cdr (assoc 0 (entget obj))))
-										
-										(setq SELECAO (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
-										
-										(if (/= SELECAO nil)
-											(progn
-												(setq qtd (sslength SELECAO))
-												(sam_delete SELECAO)
-												(princ (strcat "\nForam exclu√≠dos " (itoa qtd) " objetos."))
-											)
-											(progn
-												(alert "Nenhum item foi exclu√≠do")
-											)
-										)
-										
-									)
-								)
-								
-							)
-							(progn
-								(princ "\nSaindo da aplica√ß√£o...")
-							)
-						)
-					)
-				)
-			)
-			
-		)
-		(progn
-			(alert "Nenhum objeto selecionado")
-		)
-	)
+	;(setq all (ssget "x" (List (cons 8 layer))))
+	(setq all (ssget "x" '((-4 . "<AND") (8 . "NET_UPGRADE")(0 . "LEADER")(-4 . "AND>"))))
 	
-	(princ)
-)
-
-
-(defun f_nao_configurado()
-	(command "layer" "m" "Nao_Configurado" "c" "green" "" "")
-	(command "circle" (list x y 0) 11)
-	(command "circle" (list x y 0) 12)
-)
-
-(defun f_tudo_ok()
-	(command "layer" "m" "Configurado_Ok" "c" "yellow" "" "")
-	(command "circle" (list x y 0) 5)
-	(command "circle" (list x y 0) 6)
-)
-
-
-
-(defun f_numeracao_dos_blocos_incompativeis()
-	(command "layer" "m" "Divergencia_Valores_incopativeis" "c" "133" "" "")
-	(command "circle" (list x y 0) 7)
-	(command "circle" (list x y 0) 8)
-)
-
-
-(defun f_nome_dos_blocos_incompativeis()
-	(command "layer" "m" "Nomes_dos_blocos_incopativeis" "c" "190" "" "")
-	(command "circle" (list x y 0) 9)
-	(command "circle" (list x y 0) 10)
-)
-
-
-(defun carrega_lista_posicao_tap()
-	(setq all (ssget "x" (List (cons -4 "<OR") (cons 8 "NET-TAP")  (cons 8 "DC")  (cons -4 "OR>") )))
-	;(setq all (ssget "x" '((-4 . "<AND") (8 . "ESPECIAL")(0 . "TEXT")(-4 . "AND>"))))
-	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
-	(setq lista_posicao_tap nil)
+	
 	(if (/= all nil)
 		(progn
 			(setq qtd (- (sslength all) 1))
 			(while (>= qtd 0)
 				(setq obj (ssname all qtd))
 				(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
-				(setq coord (cdr (assoc 10 (entget obj))))
-				(setq x1 (rtos (car coord) 2 3))
-				(setq y1 (rtos (cadr coord) 2 3))
+				(setq numeroVertices  (cdr (assoc 76 (entget obj))))
 				
-				(setq lista_posicao_tap (cons (list (strcat x1 y1) obj  ) lista_posicao_tap))
+				(if (= numeroVertices 2)
+					(progn
+						;procura coordenadas
+						(setq contador 1)
+						(setq sair 0)
+						(setq encontrados 0)
+						(while (or (= sair 0) (< encontrados 2))
+							
+							(setq elemento (nth contador (entget obj)))
+							
+							(setq id1 (car elemento))
+							
+							(if (= id1 10)
+								(progn
+									(setq encontrados (+ encontrados 1))
+									
+									(if (= encontrados 1)
+										(progn
+											(setq coord1 (cdr elemento))
+										)
+									)
+									(if (= encontrados 2)
+										(progn
+											(setq coord2 (cdr elemento))
+											(setq sair 1)
+										)
+									)
+									
+								)
+							)
+							
+							(setq contador (+ contador 1))
+						)
+						
+						;(command "layer" "m" "teste1" "c" "yellow" "" "")
+						;(command "circle" coord2 1)
+						;(command "circle" coord1 1)
+						
+						
+						
+						(setq objInformacoes nil)
+						(setq objPolyline nil)
+						
+						;Salva flechas conferidas, e n„o vai mais precisar conferir
+						(setq x11 (rtos (car coord2) 2 3))
+						(setq y11 (rtos (cadr coord2) 2 3))
+						(setq procura4 (assoc (strcat x11 y11) listaFeitos))
+						(if(= procura4 nil)
+							(progn
+								
+								(setq listaFeitos (cons (list (strcat x11 y11))  listaFeitos))
+								(setq objInformacoes (procura_atualizacoes coord1 coord2))
+								(if (= objInformacoes nil) 
+									(progn
+										
+									)
+									(progn
+										
+										(setq blockName (strcase (cdr (assoc 2 (entget objInformacoes)))))
+										
+										(if (= blockName "CX_CODUPGRADECABO")
+											(progn
+												
+											)
+											(progn
+												
+												(setq objPolyline (procura_polyline coord2 coord1))
+											)
+										)
+										
+										
+									)
+								)
+								
+							)
+							
+						)
+						
+						
+						(if (and (/= objInformacoes nil) (/= objPolyline nil) (= procura4 nil) )
+							(progn
+								
+								
+								(setq listaObjetoPolyline (pontos_polyline objPolyline  ))
+								(command "zoom" "c" (nth 0 listaObjetoPolyline) 50)
+								
+								(setq all2 (ssget "WP"  listaObjetoPolyline))
+								(if (= all2 nil)
+									(progn
+										(setq all2 (ssget "WP"  listaPontoPolyline2))
+									)
+								)
+								
+								
+								(if (/= all2 nil)
+									(progn
+										
+										(setq qtd2 (- (sslength all2) 1))
+										(setq achouObj 0)
+										(while (>= qtd2 0)
+											(setq obj2 (ssname all2 qtd2))
+											(setq layerName2 (strcase (cdr (assoc 8 (entget obj2)))))
+											
+											(if (or  (= layerName2 "NET-TAP")  (= layerName2 "TPSYM01") )
+												(progn
+													
+													(setq achouObj 1)
+													
+													;(getstring "ldlddlld")
+													
+												)
+											)
+											
+											(setq qtd2 (- qtd2 1))
+										)
+										
+										(if (= achouObj 0)
+											(progn
+												
+												(setq coordObj1  (cdr (assoc 10 (entget objInformacoes))))
+												
+												(command "layer" "m" "Erro_encontrado" "c" "magenta" "" "")
+												(command "circle" coordObj1 10)
+												(command "circle" coordObj1 9)
+												(command "circle" coordObj1 8)
+												
+												(command "zoom" "c" coordObj1 12)
+												
+												(getstring "N„o encontrou o objeto")
+												
+												(setq all3 (ssget "x" (List (cons 8 "layer_temporaria1"))))
+												(command "erase" all3 "")
+												
+											)
+										)
+										
+									)
+									(progn
+										;(getstring "zzzz")
+									)
+								)
+							)
+						)
+						
+					)
+				)
 				
 				
 				(setq qtd (- qtd 1))
@@ -133,56 +168,7 @@
 		)
 	)
 	
-)
-
-
-
-
-
-
-(defun sam_delete(o)
-	(command "erase" o "")
-)
-
-
-
-(defun configura_lista(lista)
-	(setq comprimento_array (length lista))
-	(setq lista1 nil)
-	(while (> comprimento_array 0)
-		
-		(setq elem (nth (- comprimento_array 1)  lista ) )
-		
-		
-		(setq lista1 (cons (list elem) lista1))
-		
-		(setq comprimento_array (- comprimento_array 1))
-	)
 	
-	lista1
-)
-
-(defun verifica_opcoes_escolha_string(string_digitada opcoes)
-	(setq string_digitada (strcase string_digitada))
-	(setq opcoes (configura_lista opcoes))
-	
-	(setq check_value (assoc string_digitada opcoes))
-	
-	check_value
-)
-
-
-
-
-;:: ViewExtents  coordenada dos zooms da tela  ===> retorna uma lista de coordenadas
-(defun ViewExtents (/ A B C D X)
-  (setq B (getvar "VIEWSIZE")
-        A (* B (/ (car (getvar "SCREENSIZE")) (cadr (getvar "SCREENSIZE"))))
-        X (trans (getvar "VIEWCTR") 1 2)
-        C (trans (list (- (car X) (/ A 2.0)) (+ (cadr X) (/ B 2.0))) 2 1)
-        D (trans (list (+ (car X) (/ A 2.0)) (- (cadr X) (/ B 2.0))) 2 1)
-  );setq
-  (list C D)
 )
 
 
@@ -313,12 +299,15 @@
 								
 								
 								
-								
 								(command "layer" "m" "layer_temporaria1" "c" "cyan" "" "")
 								(command "line" ponto2 ponto3 "")
 								;(command "zoom" "c" ponto3 10)
 								;(getstring "ldldl")
 								(command "line" ponto3 ponto1 "")
+								;(command "zoom" "c" ponto2 10)
+								;(getstring "ldldl")
+								
+								
 								
 							)
 						
@@ -368,14 +357,12 @@
 	procura
 )
 
-
-
 (defun procura_atualizacoes(c1 c2)
 	(setq angulo (angle c1 c2))
 	(setq procura nil)
 	(setq distanciaRun 0)
 	(while (= procura nil)
-		(setq procura (faz_janela (polar c2 angulo distanciaRun) 2 "CX_CODUPGRADE,CX_CodUpgrade,CX_CodUpgradeCabo" 0.3))
+		(setq procura (faz_janela (polar c2 angulo distanciaRun) 2 "CX_CodUpgrade,CX_CodUpgradeCabo" 0.3))
 		(setq distanciaRun (+ distanciaRun 0.01))
 		
 		(if (/= procura nil)
@@ -409,20 +396,64 @@
 )
 
 
-(defun sam_zoom(c tamanho)
-	(if (= tamanho nil)
-		(setq tamanho 10)
-	)
-	(command "zoom" "c" c tamanho)
+
+
+(defun c:lll()
+	(load pathLisp)
+	
+	(princ (strcat "O arquivo '" pathLisp "', foi carregado. Para iniciar digite 'rel'"))
+	(princ)
 )
 
-(defun sam_rtos (numero_real casas_decimais)
-	(if (= casas_decimais nil)
+(setq pathLisp "C:\\Users\\Samuel\\Desktop\\arcitech lisp verifica informaÁıes\\relaciona.lsp")
+(setq basePath "C:\\Users\\Samuel\\Desktop\\arcitech lisp verifica informaÁıes\\")
+
+
+(load "C:\\arcitech1\\funcoes.lsp")
+
+(defun c:rel()
+	(setvar "cmdecho" 0)
+	(command "_osnap" "none")
+	(vl-load-com)
+	
+	(setq resp (strcase (getstring "\nDo inÌcio? S/N")))
+	(if (= resp "S")
 		(progn
-			(setq casas_decimais 3)
+			(setq listaFeitos nil)
 		)
 	)
-	(rtos numero_real 2 casas_decimais)
 	
+	(setq all3 (ssget "x" (List (cons 8 "layer_temporaria1,Erro_encontrado")  )))
+	(command "erase" all3 "")
+	
+	
+	(relaciona_leaders)
+	
+	
+	(alert "Fim")
+	(princ "\nFim")
+	(princ)
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

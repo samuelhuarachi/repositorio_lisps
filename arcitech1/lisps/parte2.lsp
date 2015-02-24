@@ -105,8 +105,8 @@
 ;com os objetos que ficam dentro da nuvem
 (defun carrega_arquivo()
  
-	(setq ARQUIVO_CSV (getfiled "Selecione o arquivo CSV" "c:" "csv" 0))
-	(setq ARQUIVO_CSV (open ARQUIVO_CSV "r"))
+	;(setq ARQUIVO_CSV (getfiled "Selecione o arquivo CSV" "c:" "csv" 0))
+	(setq ARQUIVO_CSV (open ARQUIVO_PATH "r"))
 
 	(setq contador1 0)
 	(if (/= ARQUIVO_CSV nil)
@@ -405,6 +405,9 @@
 								(if (/= all2 nil)
 									(progn
 										
+										;Retorna o objeto no ponto base
+										(setq objPontoBase (retorna_pontos_base all2))
+										
 										(setq qtd2 (- (sslength all2) 1))
 										(setq achouObj 0)
 										(while (>= qtd2 0)
@@ -478,7 +481,18 @@
 																	(setq x1 (rtos (car coord3) 2 3))
 																	(setq y1 (rtos (cadr coord3) 2 3))
 																	
-																	(setq lista_informacoes (cons (list (strcat x1 y1 ) valorAntigo valorNovo  Novo coord3 blockName2) lista_informacoes))
+																	
+																	
+																	;Muda o ponto de inserção do TAP, para o ponto de inserção do ponto
+																	;Pois os objetos estão em pontos diferentes
+																	(if (/= objPontoBase nil)
+																		(progn
+																			(setq coord3 (cdr (assoc 10 (entget objPontoBase))))
+																			(setq x1 (rtos (car coord3) 2 3))
+																			(setq y1 (rtos (cadr coord3) 2 3))
+																		)
+																	)
+																	(setq lista_informacoes (cons (list (strcat x1 y1 ) valorAntigo valorNovo  Novo coord3 blockName2  objPontoBase) lista_informacoes))
 																	
 																	(setq achouObj 1)
 																	
@@ -751,6 +765,55 @@
 )
 
 
+(defun gera_lista_posicao_base()
+ 
+	(setq ARQUIVO_PATH (getfiled "Selecione o arquivo CSV" "c:" "csv" 0))
+	(setq ARQUIVO_CSV (open ARQUIVO_PATH "r"))
+
+	(setq contador1 0)
+	(if (/= ARQUIVO_CSV nil)
+		(progn
+
+			(setq 
+				 LINHA_CSV (read-line ARQUIVO_CSV)
+				 LISTA_LINHA nil
+				 LISTA_CSV nil
+			)
+			
+			;Percorrendo o csv do arquivo base
+			(while (/= LINHA_CSV nil)
+
+				(setq LISTA_LINHA (sparser LINHA_CSV ";"))
+				
+				;(assoc "700281.0317529290.421" lista_informacoes)
+				(setq x (atof (nth 0 LISTA_LINHA)))
+				(setq y (atof (nth 1 LISTA_LINHA)))
+				
+				
+				(command "layer" "m" "ponto_base" "c" "green" "" "")
+				(command "circle" (list x y 0) 0.1)
+				
+				
+				(setq LINHA_CSV (read-line ARQUIVO_CSV))
+				(setq LISTA_LINHA nil)
+				
+			)
+			
+			(close ARQUIVO_CSV)
+			(setq ARQUIVO_CSV nil)
+		)
+	)
+)
+
+(defun exclui_ponto_base()
+	(setq sel (ssget "x" '((-4 . "<AND") (8 . "ponto_base")(0 . "CIRCLE")(-4 . "AND>"))))
+	(command "erase" sel "")
+)
+
+(defun exclui_layer_descessarias()
+	(setq sel (ssget "x" '((-4 . "<AND") (8 . "ponto_base,layer_temporaria1")(-4 . "AND>"))))
+	(command "erase" sel "")
+)
 
 (load "C:\\arcitech1\\lisps_aux\\funcoes.lsp")
 
@@ -759,12 +822,18 @@
 	(command "_osnap" "none")
 	(vl-load-com)
 	
+	(exclui_ponto_base)
+	
+	(gera_lista_posicao_base)
+	
 	(relaciona_leaders)
 	
 	(carrega_lista_posicao_tap)
 	
 	(carrega_arquivo)
 	
+	
+	(exclui_layer_descessarias)
 	
 	(alert "\nLayer geradas")
 	(princ "\nDivergencia2")
