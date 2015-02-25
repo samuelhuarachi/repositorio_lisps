@@ -160,21 +160,79 @@
 	(setq contador 0)
 	(setq elem (nth contador lista_relatorio))
 	
+	(setq lista_ordem1 nil)
+	(setq lista_ordem2 nil)
+	
+	;Monta a ordem de extração
+	;Gera duas listas que serão usadas para fazer a extração
 	(while (/= elem nil)
 		(setq resp1 (verifica_se_tap elem))
 		(if resp1
 			(progn
 				(setq valor2Sparser (sparser (nth 0 elem) "/"))
-				
-				(write-line (strcat "Taps - " (nth 0 valor2Sparser) " Vias;RMT10" (nth 0 valor2Sparser) "-" (nth 1 valor2Sparser) ";" (itoa (nth 1 elem)) ) ARQUIVO_CSV)
-				
-				;Taps - 2 Vias;RMT102-17;2/17/1;6
+				(if (=  (member (nth 0 valor2Sparser) lista_ordem1)  nil  )
+					(progn
+						(setq lista_ordem1 (cons  (nth 0 valor2Sparser)  lista_ordem1))
+					)
+				)
+				(if (=  (member (nth 1 valor2Sparser) lista_ordem2)  nil  )
+					(progn
+						(setq lista_ordem2 (cons  (nth 1 valor2Sparser)  lista_ordem2))
+					)
+				)
 			)
 		)
-		
 		(setq contador (+ contador 1))
 		(setq elem (nth contador lista_relatorio))
 	)
+	
+	
+	;Ordena as listas
+	(setq lista_ordem1 (reverse (vl-sort lista_ordem1 '(lambda (x1 x2) (< (atoi x1) (atoi x2))))))
+	(setq lista_ordem2 (reverse (vl-sort lista_ordem2 '(lambda (x1 x2) (< (atoi x1) (atoi x2))))))
+	
+	(setq cont_1 (length lista_ordem1))
+	
+	
+	(while (> cont_1 0)
+		(setq procurar_por1 (nth (- cont_1 1) lista_ordem1))
+		(setq cont_2 (length lista_ordem2))
+		(while (> cont_2 0)
+			(setq procurar_por2 (nth (- cont_2 1) lista_ordem2))
+			
+			(setq contador 0)
+			(setq elem (nth contador lista_relatorio))
+			(while (/= elem nil)
+				(setq resp1 (verifica_se_tap elem))
+				(if resp1
+					(progn
+						(setq valor2Sparser (sparser (nth 0 elem) "/"))
+						
+						(if (and (= (nth 0 valor2Sparser) procurar_por1 )  (= (nth 1 valor2Sparser) procurar_por2  )  )
+							(progn
+								(write-line (strcat "Taps - " (nth 0 valor2Sparser) " Vias;RMT10" (nth 0 valor2Sparser) "-" (nth 1 valor2Sparser) ";" (itoa (nth 1 elem)) ) ARQUIVO_CSV)
+						
+							)
+						)
+						
+						;Taps - 2 Vias;RMT102-17;2/17/1;6
+					)
+				)
+				
+				(setq contador (+ contador 1))
+				(setq elem (nth contador lista_relatorio))
+			)
+			
+			
+			
+			(setq cont_2 (- cont_2 1))
+		)
+		(setq cont_1 (- cont_1 1))
+	)
+	
+	
+	
+	
 )
 
 

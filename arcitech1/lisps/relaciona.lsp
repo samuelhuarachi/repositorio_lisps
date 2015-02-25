@@ -99,9 +99,6 @@
 						)
 						
 						
-						
-						
-						
 						(if (and (/= objInformacoes nil) (/= objPolyline nil) (= procura4 nil) )
 							(progn
 								
@@ -130,7 +127,7 @@
 													(setq layerName2 (strcase (cdr (assoc 8 (entget obj2)))))
 													(setq blockName2 (strcase (cdr (assoc 2 (entget obj2)))))
 													
-													(if (or  (= layerName2 "NET-TAP")  (= blockName2 "DC") )
+													(if (or   (= layerName2 "NET-AMP") (= layerName2 "NET-TAP")  (= blockName2 "DC") )
 														(progn
 															
 															(setq achouObj 1)

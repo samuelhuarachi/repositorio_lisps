@@ -57,11 +57,14 @@
 		(princ "\n[4] - Verifica erros individualmente")
 		(princ "\n[5] - Números base")
 		(princ "\n[6] - Relatório")
+		(princ "\n[7] - Numera CX_CodUpgradeCabo")
+		(princ "\n[8] - Verifica comprimento dos cabos")
+		
 		(princ "\n[s] - Sair")
 		(princ "\nDigite a opção: ")
 		
 		(setq opcao (getstring))
-		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "S")))
+		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "S")))
 		(if (= valid_option nil )
 			(progn
 				(princ "\n### Opção inválida! ###")
@@ -115,6 +118,19 @@
 							)
 						)
 						
+						(if (= (strcase opcao) "7" )
+							(progn
+								(load (strcat basePath "lisps\\numera_cx.lsp"))
+								(c:numera_cx)
+							)
+						)
+						
+						(if (= (strcase opcao) "8" )
+							(progn
+								(load (strcat basePath "lisps\\calcula_metragem_cabo.lsp"))
+								(c:calcula_metragem_cabo)
+							)
+						)
 						
 						
 					)
@@ -126,6 +142,6 @@
 		)
 	)
 	
-	
+	(princ "\nFim")
 	(princ)
 )

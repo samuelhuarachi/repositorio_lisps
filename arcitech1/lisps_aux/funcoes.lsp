@@ -11,6 +11,10 @@
 	(princ)
 )
 
+(defun gts(c)
+	(getstring c)
+)
+
 
 (defun sparser (str delim / ptr lst)
 	(while (setq ptr (vl-string-search delim str))
@@ -162,7 +166,12 @@
 
 
 (defun sam_delete(o)
-	(command "erase" o "")
+	(if (/= o nil)
+		(progn
+			(command "erase" o "")
+		)
+	)
+	
 )
 
 
@@ -480,6 +489,51 @@
 	)
 	(rtos numero_real 2 casas_decimais)
 	
+)
+
+
+;Pega o angulo e a distancia, vc entra com 2 pontos
+(defun c:gad()
+	(vl-load-com)
+	
+	(setq p1_ (getpoint "\nPONTO 1"))
+	(setq p2_ (getpoint "\nPONTO 2"))
+	
+	
+	(setq angulo (angle p1_ p2_))
+	(setq ANGULOGRAUS (* (/ ANGULO pi) 180))
+	(setq distancia (distance p1_ p2_))
+	
+	(princ (strcat "\nDistancia    " (rtos distancia 2 18)))
+	(princ (strcat "\n" (rtos angulo 2 18)  "   ///   "   (rtos ANGULOGRAUS 2 18)))
+	
+	
+	
+	
+	(princ)
+)
+
+
+
+(defun samcircle(p raios layername color)
+	(if  (= layername nil)
+		(progn
+			(setq layername "layer_temporaria2")
+		)
+	)
+	(if (= color nil)
+		(progn
+			(setq color "251")
+		)
+	)
+	(if (= raios nil)
+		(progn
+			(setq raios 1)
+		)
+	)
+	
+	(command "layer" "m" layername "c" color "" "")
+	(command "circle" p raios)
 )
 
 
