@@ -11,8 +11,27 @@
 	(princ)
 )
 
+
+(defun parar()
+	(getstring "\n======   Breakpoint     ========")
+)
+
 (defun gts(c)
 	(getstring c)
+)
+
+
+(defun CriarLink (ent link codigo)
+	(if (not (tblsearch "APPID" link)) (regapp link))
+	(if (= (type codigo) 'STR)
+		(setq tipo_dado 1000)
+		(setq tipo_dado 1071)
+	)
+	(setq entl (entget ent))
+	(setq xd (list (list -3 (list link (cons tipo_dado codigo)))))
+	(setq new_entl (append entl xd))
+	(entmod new_entl)
+	(entupd (cdr (assoc -1 new_entl)))
 )
 
 
@@ -35,6 +54,27 @@
   (setq VALOR_ATTRIB (cdr (assoc 1 (entget EL))))
   VALOR_ATTRIB
 )
+
+
+(defun GetId (entd nome_link / codigo nome links retorno)
+ (setq retorno nil)
+ (if entd
+  (progn   
+   (if (setq Links  (assoc -3 (entget entd '("*"))))
+	(progn
+	 (assoc codlog (cdr links))   
+	 (if (assoc nome_link (cdr links))
+	  ;(assoc "Samuel" (cdr links))
+	  (setq retorno (cdr (car (cdr (assoc nome_link (cdr links))))))
+	  ;(setq retorno (cdr (car (cdr (assoc "Samuel" (cdr links))))))
+	 )
+	)
+   )
+  )
+ )
+ retorno
+)
+
 
 
 (defun c:deleteall( / layerName typeBlock qtd)
@@ -132,6 +172,15 @@
 	(command "layer" "m" "Nomes_dos_blocos_incopativeis" "c" "190" "" "")
 	(command "circle" (list x y 0) 9)
 	(command "circle" (list x y 0) 10)
+)
+
+(defun c:v ()
+ 
+ 
+ (if (setq ent (car (entsel)))
+   ;(entget ent '("*"))
+   (assoc -3 (entget ent '("*")))
+ )
 )
 
 
@@ -435,7 +484,7 @@
 
 
 
-(defun procura_atualizacoes(c1 c2)
+(defun procura_atualizacoes(c1 c2 / angulo  procura distanciaRun)
 	(setq angulo (angle c1 c2))
 	(setq procura nil)
 	(setq distanciaRun 0)
@@ -463,7 +512,7 @@
 	 JANELA
 )
 
-(defun faz_janela(COORD TIPO PROPRIEDADE TAMANHO)
+(defun faz_janela(COORD TIPO PROPRIEDADE TAMANHO / JANELA PONTO1 PONTO2)
 	 (command "zoom" "c" COORD 30)
 	 (setq PONTO1 (polar COORD (/ pi 4) TAMANHO))
 	 (setq PONTO2 (polar COORD (* (/ pi 4) 5) TAMANHO))
@@ -534,6 +583,16 @@
 	
 	(command "layer" "m" layername "c" color "" "")
 	(command "circle" p raios)
+)
+
+(defun samshow(v)
+	(if (/= (type v) 'STR)
+		(progn
+			(setq v (rtos v 2 2))
+		)
+	)
+	(princ (strcat "\nVariável: " v))
+	(princ)
 )
 
 

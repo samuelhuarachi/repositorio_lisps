@@ -163,6 +163,7 @@
 							)
 							(progn
 								;Gera os círculos no mapa, indicando que houve erro
+								;(parar)
 								(f_nome_dos_blocos_incompativeis)
 							)
 						)
@@ -170,7 +171,6 @@
 						
 					)
 					(progn
-						
 						
 						(setq procura (forca_procura  (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA) ))
 						
@@ -196,6 +196,7 @@
 												(f_tudo_ok)
 											)
 											(progn
+												
 												(f_numeracao_dos_blocos_incompativeis)
 											)
 										)
@@ -209,12 +210,23 @@
 								
 							)
 							(progn
+								
+								;O objeto pode estar na nuvem, mas essa nuvem ter mais de dois taps
+								
+								
+								
+								
+								
+								
 								;Se chegou até esse ponto. Significa que o objeto não tem núvem.
 								;Ou seja, não foi alterado.
-								
-								
-								
 								(setq searchElement (assoc (strcat (nth 0 LISTA_LINHA)   (nth 1 LISTA_LINHA)) lista_posicao_tap))
+								
+								(if (= searchElement nil)
+									(setq searchElement (forca_procura_ponto_isolado  (nth 0 LISTA_LINHA) (nth 1 LISTA_LINHA) ) )
+								)
+								
+								
 								;(setq x (atof (nth 0 LISTA_LINHA)))
 								;(setq y (atof (nth 1 LISTA_LINHA)))
 								
@@ -253,10 +265,8 @@
 										)
 										
 										
-										
 									)
 									(progn
-										
 										
 										(f_nao_configurado)
 										
@@ -289,6 +299,43 @@
 )
 
 
+(defun forca_procura_ponto_isolado(x y / elemEncontrado all qtd obj coord x1 y1 distancia1 pontoBase)
+	(setq elemEncontrado nil)
+	(setq menorDist 10000000000000)
+	
+	;(setq all (ssget "X" '((8 . "LAYER"))))
+	;(setq all (ssget "x" (List (cons 8 layer))))
+	(setq all (ssget "x" '((-4 . "<AND") (8 . "NET-TAP")(0 . "INSERT")(-4 . "AND>"))))
+	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+	(if (/= all nil)
+		(progn
+			(setq qtd (- (sslength all) 1))
+			(while (>= qtd 0)
+				(setq obj (ssname all qtd))
+				(setq coord (cdr (assoc 10 (entget obj))))
+				(setq x1 (rtos (car coord) 2 3))
+				(setq y1 (rtos (cadr coord) 2 3))
+				
+				(setq pontoBase (list (atof x) (atof y) 0))
+				
+				(setq distancia1 (distance pontoBase coord ))
+				
+				(if (and (< distancia1 1.7)  (< distancia1 menorDist)  )
+					(progn
+						(setq menorDist distancia1)
+						(setq elemEncontrado (list (strcat x1 y1) obj))
+					)
+				)
+				
+				
+				
+				(setq qtd (- qtd 1))
+			)
+		)
+	)
+	
+	elemEncontrado
+)
 
 (defun forca_procura(x y)
 	(setq coordTxt (list (atof x)  (atof y) 0))
@@ -316,6 +363,8 @@
 )
 
 (defun relaciona_leaders()
+	(setq lista_muitos_taps nil) ;gera a veriável que irá armazenar a quantidade de taps presentes
+	
 	
 	;(setq all (ssget "x" (List (cons 8 layer))))
 	(setq all (ssget "x" '((-4 . "<AND") (8 . "NET_UPGRADE")(0 . "LEADER")(-4 . "AND>"))))
@@ -386,6 +435,8 @@
 							)
 						)
 						
+						;Verifica quantos taps foram excluídos do bloco de informações
+						;(setq qtdTapExcluidos (conta_qtd_taps_excluidos objInformacoes))
 						
 						(if (and (/= objInformacoes nil) (/= objPolyline nil))
 							(progn
@@ -401,7 +452,14 @@
 									)
 								)
 								
-								
+								(setq qtd_taps 0) ;contador que irá marcar a quantidade de taps que ficam dentro da nuvem
+								(setq qtd_base_tap 0)
+								(setq qtd_dc_base 0)
+								(setq qtd_acoplador 0)
+								(setq lista_objetos_base_tap nil)
+								(setq lista_objetos_tap_mapa nil)
+								(setq lista_objetos_base_dc nil)
+								(setq lista_objetos_dc_mapa nil)
 								(if (/= all2 nil)
 									(progn
 										
@@ -413,27 +471,70 @@
 										(while (>= qtd2 0)
 											(setq obj2 (ssname all2 qtd2))
 											
+											;Se o objeto for um circulo, com as informações do ponto base
+											(if (= (strcase (cdr (assoc 0 (entget obj2)))) "CIRCLE")
+												(progn
+													
+													(setq layerName2 (strcase (cdr (assoc 8 (entget obj2)))))
+													(if (= layerName2 "PONTO_BASE")
+														(progn
+															(setq blockName2 (strcase (GetId obj2 "nome_bloco")))
+															
+															;Verifica se a string é do tipo tap
+															(setq seTap (vl-string-search "TAP" blockName2))
+															(if (/= seTap nil)
+																(progn
+																	(setq qtd_base_tap (+ qtd_base_tap 1))
+																	(setq lista_objetos_base_tap (cons obj2 lista_objetos_base_tap))
+																)
+															)
+															
+															
+															;Monta lista objeto DC
+															;qtd_dc_base
+															(setq dcFinding (vl-string-search "DC" blockName2))
+															(if (/= dcFinding nil)
+																(progn
+																	(setq qtd_dc_base (+ qtd_dc_base 1))
+																	(setq lista_objetos_base_dc (cons obj2 lista_objetos_base_dc))
+																)
+															)
+															
+														)
+													)
+													
+												)
+											)
+											
+											
 											(if (= (strcase (cdr (assoc 0 (entget obj2)))) "INSERT")
 												(progn
 												
 													(setq layerName2 (strcase (cdr (assoc 8 (entget obj2)))))
 													(setq blockName2 (strcase (cdr (assoc 2 (entget obj2)))))
 													
-													(if (or (= layerName2 "NET-TAP")   (= blockName2 "DC")   )
+													(if (or (= layerName2 "NET-TAP")   (= blockName2 "DC")  (= blockName2 "3WAY") )
 														(progn
 															
 															(setq procurarPor nil)
 															(if (= layerName2 "NET-TAP")
 																(progn
 																	(setq procurarPor "TAP")
+																	(setq qtd_taps (+ qtd_taps 1))
+																	(setq lista_objetos_tap_mapa (cons obj2 lista_objetos_tap_mapa))
 																)
 															)
-															(if (= blockName2 "DC")
+															(if (or  (= blockName2 "DC")  (= blockName2 "3WAY") )
 																(progn
 																	(setq procurarPor "ACOPLADOR")
+																	(setq qtd_acoplador (+ qtd_acoplador 1))
+																	(setq lista_objetos_dc_mapa (cons obj2 lista_objetos_dc_mapa))
+																	
 																)
 															)
 															
+															
+															;==== Percorrendo atributos do bloco informações - i
 															(setq contador2 1)
 															(setq atributoFind (retorna_attrib objInformacoes contador2) )
 															(if (/= atributoFind nil)
@@ -464,24 +565,19 @@
 																	)
 																)
 															)
+															;==== Percorrendo atributos do bloco informações - f
 															
 															
 															(if (= resultadoPesquisa "S")
 																(progn
-																	
 																	;objInformações
 																	(setq valorAntigo (retorna_attrib objInformacoes contador2 ))
 																	(setq valorNovo (retorna_attrib objInformacoes (+ contador2 1)))
-																	
-																	
-																	
 																	(setq Novo (retorna_attrib obj2 1))
 																	
 																	(setq coord3 (cdr (assoc 10 (entget obj2))))
 																	(setq x1 (rtos (car coord3) 2 3))
 																	(setq y1 (rtos (cadr coord3) 2 3))
-																	
-																	
 																	
 																	;Muda o ponto de inserção do TAP, para o ponto de inserção do ponto
 																	;Pois os objetos estão em pontos diferentes
@@ -492,32 +588,49 @@
 																			(setq y1 (rtos (cadr coord3) 2 3))
 																		)
 																	)
-																	(setq lista_informacoes (cons (list (strcat x1 y1 ) valorAntigo valorNovo  Novo coord3 blockName2  objPontoBase) lista_informacoes))
+																	
+																	(if (/= blockName2 "DC")
+																		(progn
+																			(setq lista_informacoes (cons (list (strcat x1 y1 ) valorAntigo valorNovo  Novo coord3 blockName2  objPontoBase) lista_informacoes))
+																		)
+																	)
+																	
 																	
 																	(setq achouObj 1)
-																	
-																)
-																(progn
-																	(command "layer" "m" "Divergencia2" "c" "241" "" "")
-																	(command "circle" (list (atof x1) (atof y1) 0) 4)
-																	(command "circle" (list (atof x1) (atof y1) 0) 3)
-																
 																)
 															)
 															
 															
 															
+															(if (/= resultadoPesquisa "S")
+																(progn
+																	;(parar)
+																	;(command "layer" "m" "Divergencia2" "c" "241" "" "") ;existe tap, ou dc. E no bloco das informações precisa estar declarado TAP, e DC
+																	;(command "circle" (list (atof x1) (atof y1) 0) 4)
+																	;(command "circle" (list (atof x1) (atof y1) 0) 3)
+																)
+															)
 															
 														)
 													)
 												)
 											)
 											
-											
-											
-											
 											(setq qtd2 (- qtd2 1))
 										)
+										
+										;dentro da 'nuvem'
+										
+										;Se a quantidade taps dentro da nuvem for maior do que 1
+										(if (or (> qtd_base_tap 1)  (> qtd_taps 1)  (> qtd_dc_base 0)  (> qtd_acoplador 0) )
+											(progn
+												
+												(setq lista_muitos_taps  (cons (list qtd_taps qtd_base_tap  lista_objetos_tap_mapa 
+												lista_objetos_base_tap   objInformacoes lista_objetos_base_dc lista_objetos_dc_mapa) lista_muitos_taps))
+												
+											)
+										)
+										
 										
 										(if (= achouObj 0)
 											(progn
@@ -548,6 +661,33 @@
 	)
 	
 	
+)
+
+(defun conta_qtd_taps_excluidos(obj / contadorAtributos qtdExcluidosInformacoes valA valExclusao )
+	(setq contadorAtributos 1)
+	(setq qtdExcluidosInformacoes 0)
+	(while ( /=  (retorna_attrib obj contadorAtributos) nil )
+		
+		(setq valA  (retorna_attrib obj contadorAtributos))
+		(setq valA (vl-string-trim " "	(strcase valA)))
+		
+		(if (= valA "TAP")
+			(progn
+				(setq valExclusao  (retorna_attrib obj (+ contadorAtributos 2)))
+				(setq valExclusao (vl-string-trim " " (strcase valExclusao)))
+				(if (= valExclusao "0")
+					(progn
+						(setq qtdExcluidosInformacoes (+ qtdExcluidosInformacoes 1))
+					)
+				)
+				
+			)
+		)
+		
+		(setq contadorAtributos (+ contadorAtributos 1))
+	)
+	
+	qtdExcluidosInformacoes
 )
 
 (defun pontos_polyline2(obj)
@@ -773,7 +913,6 @@
 	(setq contador1 0)
 	(if (/= ARQUIVO_CSV nil)
 		(progn
-
 			(setq 
 				 LINHA_CSV (read-line ARQUIVO_CSV)
 				 LISTA_LINHA nil
@@ -792,6 +931,10 @@
 				
 				(command "layer" "m" "ponto_base" "c" "green" "" "")
 				(command "circle" (list x y 0) 0.1)
+				(setq objCirculo (entlast))
+				(CriarLink objCirculo "nome_bloco" (nth 3 LISTA_LINHA))
+				(CriarLink objCirculo "valor" (nth 2 LISTA_LINHA))
+				
 				
 				
 				(setq LINHA_CSV (read-line ARQUIVO_CSV))
@@ -811,36 +954,752 @@
 )
 
 (defun exclui_layer_descessarias()
-	(setq sel (ssget "x" '((-4 . "<AND") (8 . "ponto_base,layer_temporaria1")(-4 . "AND>"))))
+	(setq sel (ssget "x" '((-4 . "<AND") (8 . "layer_temporaria1")(-4 . "AND>"))))
 	(command "erase" sel "")
 )
 
+(defun excluir_layer_clean()
+	(setq sel (ssget "x" '((-4 . "<AND") (8 . "Erro_valores_incoerentes,Erro_valores_incoerentes_DC,Divergencia2,ponto_base,Nao_Configurado,Configurado_Ok,Divergencia_Valores_incopativeis,Nomes_dos_blocos_incopativeis")(-4 . "AND>"))))
+	(sam_delete sel)
+)
+
 (load "C:\\arcitech1\\lisps_aux\\funcoes.lsp")
+
+
+;lbbb = lista de objetos da base
+;lmmm = lista de objeto do mapa atual
+(defun verifica_qt_atualizacoes(lbbb lmmm / achou11 tam tam2 qtdAlteration objB valorBase blocoBase key1  key2 blocoNameMap objMApA
+valorMapa)
+	(setq qtdAlteration 0)
+	(setq tam (length lbbb))
+	(while (> tam 0)
+		(setq objB (nth (- tam 1) lbbb))
+		(setq valorBase (GetId objB "valor"))
+		(setq blocoBase (GetId objB "nome_bloco"))
+		(setq key1 (strcat valorBase blocoBase))
+
+		;Percorrer os objetos do mapa e ver se tem alguem igual a ele (numero + tipo do bloco)
+		(setq tam2 (length lmmm))
+		(setq achou11 0)
+		(while (> tam2 0)
+			(setq objMApA (nth (- tam2 1) lmmm))
+			
+			;pegar informações do objeto do mapa
+			(setq blocoNameMap (strcase (cdr (assoc 2 (entget objMApA)))))
+			(setq valorMapa (strcase (retorna_attrib objMApA 1)))
+			(setq key2 (strcat valorMapa blocoNameMap))
+			
+			(if (= key1 key2)
+				(progn
+					(setq lmmm (vl-remove (nth (- tam2 1) lmmm) lmmm))
+					(setq achou11 1)
+				)
+				(progn
+					
+					
+				)
+			)
+			
+			
+			;(setq lista1 (list 1 2 3 4 5 6 7 8))
+			;(vl-remove (nth 7 lista1) lista1)
+			
+			
+			(setq tam2 (- tam2 1))
+		)
+		
+		(if (= achou11 0)
+			(progn
+				(setq qtdAlteration (+ qtdAlteration 1))
+			)
+		)
+		
+		(setq tam (- tam 1))
+	)
+	qtdAlteration
+)
+
+
+(defun excluir_elemento_lista_quando_necessario_BASE_DC(lista_base primeiraLista)
+	(setq lista_retorno lista_base )
+	(setq tam4 (length lista_base))
+	(setq encontrou 0)
+	(setq sair1 0)
+	(while(and (= sair1 0) (> tam4 0))
+		(setq el_m (nth (- tam4 1) lista_base))
+		
+		(setq valor3 (GetId el_m "valor"))
+		(setq nome_bloco3 (GetId el_m "nome_bloco"))
+		
+		(setq ProcurarBloco (nth 0 primeiraLista))
+		;(setq ProcurarValor (nth 1 primeiraLista))
+		
+		(if  (=   ProcurarBloco   (strcat nome_bloco3 valor3) )
+			(progn
+				(setq encontrou 1)
+				
+				(setq lista_retorno (vl-remove (nth (- tam4 1) lista_base) lista_base))
+				(setq sair1 1)
+			)
+		)
+		
+		(setq tam4 (- tam4 1))
+	)
+	lista_retorno
+)
+
+(defun excluir_elemento_lista_quando_necessario_BASE(lista_base primeiraLista)
+	(setq lista_retorno lista_base )
+	(setq tam4 (length lista_base))
+	(setq encontrou 0)
+	(setq sair1 0)
+	(while(and (= sair1 0) (> tam4 0))
+		(setq el_m (nth (- tam4 1) lista_base))
+		
+		(setq valor3 (GetId el_m "valor"))
+		(setq nome_bloco3 (GetId el_m "nome_bloco"))
+		
+		(setq ProcurarBloco (strcat "TAP"(nth 0 primeiraLista)))
+		(setq ProcurarValor (nth 1 primeiraLista))
+		
+		(if (and (= ProcurarValor valor3) (= ProcurarBloco nome_bloco3) )
+			(progn
+				(setq encontrou 1)
+				
+				(setq lista_retorno (vl-remove (nth (- tam4 1) lista_base) lista_base))
+				(setq sair1 1)
+			)
+		)
+		
+		(setq tam4 (- tam4 1))
+	)
+	lista_retorno
+)
+
+
+
+
+(defun excluir_elemento_lista_quando_necessario_MAPA_DC(lista_base primeiraLista)
+	(setq lista_retorno lista_base )
+	(setq tam4 (length lista_base))
+	(setq encontrou 0)
+	(setq sair1 0)
+	(while(and (= sair1 0) (> tam4 0))
+		(setq el_m (nth (- tam4 1) lista_base))
+		
+		(setq valor3 (retorna_attrib el_m 1))
+		(if (= valor3 nil)
+			(progn
+				(setq valor3 "")
+			)
+		)
+		(setq nome_bloco3 (strcase (cdr (assoc 2 (entget el_m)))))
+		
+		(setq ProcurarBloco (nth 0 primeiraLista))
+		
+		
+		(if (= ProcurarBloco (strcat nome_bloco3 valor3))
+			(progn
+				(setq encontrou 1)
+				
+				(setq lista_retorno (vl-remove (nth (- tam4 1) lista_base) lista_base))
+				(setq sair1 1)
+			)
+		)
+		
+		(setq tam4 (- tam4 1))
+	)
+	lista_retorno
+)
+
+
+(defun excluir_elemento_lista_quando_necessario_MAPA(lista_base primeiraLista)
+	(setq lista_retorno lista_base )
+	(setq tam4 (length lista_base))
+	(setq encontrou 0)
+	(setq sair1 0)
+	(while(and (= sair1 0) (> tam4 0))
+		(setq el_m (nth (- tam4 1) lista_base))
+		
+		(setq valor3 (retorna_attrib el_m 1))
+		(setq nome_bloco3 (strcase (cdr (assoc 2 (entget el_m)))))
+		
+		(setq ProcurarBloco (strcat "TAP"(nth 0 primeiraLista)))
+		(setq ProcurarValor (nth 1 primeiraLista))
+		
+		(if (and (= ProcurarValor valor3) (= ProcurarBloco nome_bloco3) )
+			(progn
+				(setq encontrou 1)
+				
+				(setq lista_retorno (vl-remove (nth (- tam4 1) lista_base) lista_base))
+				(setq sair1 1)
+			)
+		)
+		
+		(setq tam4 (- tam4 1))
+	)
+	lista_retorno
+)
+
+
+(defun carrega_lista_layer1( / all qtd obj layerName coord  x1 y1  )
+	(setq lista_layer1 nil)
+	
+	;(setq all (ssget "X" '((8 . "LAYER"))))
+	;(setq all (ssget "x" (List (cons 8 layer))))
+	(setq all (ssget "x" '((-4 . "<AND") (8 . "Nao_Configurado,Nomes_dos_blocos_incopativeis,Divergencia_Valores_incopativeis")(0 . "CIRCLE")(-4 . "AND>"))))
+	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+	(if (/= all nil)
+		(progn
+			(setq qtd (- (sslength all) 1))
+			(while (>= qtd 0)
+				(setq obj (ssname all qtd))
+				(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
+				(setq coord (cdr (assoc 10 (entget obj))))
+				(setq x1 (rtos (car coord) 2 3))
+				(setq y1 (rtos (cadr coord) 2 3))
+				
+				(setq lista_layer1 (cons  (list (strcat x1 y1)   obj) lista_layer1))
+				
+				(setq qtd (- qtd 1))
+			)
+		)
+	)
+	
+)
+
+
+(defun apagar_layer_anteriores(lllll3)
+	(carrega_lista_layer1)
+	
+	(setq tamll (length lllll3))
+	
+	(while (> tamll 0)
+		(setq elmm (nth (- tamll 1)  lllll3   )   )
+		(setq coordsfd (cdr (assoc 10 (entget elmm))))
+		(setq x1123 (rtos (car coordsfd) 2 3))
+		(setq y1231 (rtos (cadr coordsfd) 2 3))
+		
+		
+		(setq procuraELL "")
+		(while (/= procuraELL nil)
+			(setq procuraELL (assoc (strcat x1123 y1231 )   lista_layer1 ))
+			(if (/= procuraELL nil)
+				(progn
+					(sam_delete (nth 1 procuraELL))
+					(setq lista_layer1 (vl-remove (assoc (strcat x1123 y1231 )   lista_layer1 ) lista_layer1))
+					
+				)
+			)
+		)
+		
+		
+		
+		(setq tamll (- tamll 1))
+	)
+	
+)
+
+;Quando exitir muitos objetos(tap,dc) dentro da nuvem
+(defun configura_muitos_taps()
+
+
+	(if (/= lista_muitos_taps nil)
+		(progn
+			
+			(setq quantidade_el_lista (length lista_muitos_taps))
+			(while (> quantidade_el_lista 0)
+				
+				(setq informacoes1 (nth (- quantidade_el_lista 1) lista_muitos_taps))
+				
+				(setq quatidade_taps_mapa (nth 0 informacoes1) )
+				(setq quatidade_taps_BASE (nth 1 informacoes1) )
+				
+				(setq lista_obj_ponto_mapa (nth 2 informacoes1))
+				(setq lista_obj_ponto_base (nth 3 informacoes1))
+				(setq objeto_informacoes (nth 4 informacoes1))
+				(setq lista_obj_ponto_base_dc (nth 5 informacoes1))
+				(setq lista_obj_ponto_mapa_dc (nth 6 informacoes1))
+				
+				
+				;Apagar layers feitas anteriormente, pois podem estar erradas
+				;visto que as funções anteriores não tratam nuvens, com vários taps
+				(apagar_layer_anteriores  lista_obj_ponto_base)
+				(apagar_layer_anteriores  lista_obj_ponto_base_dc)
+				
+				
+				(setq qtdTapExcluidos (conta_qtd_taps_excluidos objeto_informacoes))
+				
+				(if (< (- quatidade_taps_BASE qtdTapExcluidos) 0)
+					(progn
+						;(princ "\nErro -----")
+						;(parar)
+					)
+				)
+				
+				;Percorrendo bloco das informações e comparando com as informações da base e do mapa
+				(setq contadorAtributos 1)
+				(setq qtdExcluidosInformacoes 0)
+				(while ( /=  (retorna_attrib objeto_informacoes contadorAtributos) nil )
+					
+					(setq valA  (retorna_attrib objeto_informacoes contadorAtributos))
+					(setq valA (vl-string-trim " "	(strcase valA)))
+					
+					
+					(if (= valA "ACOPLADOR")
+						(progn
+							(setq primeiro  (vl-string-trim " "	(strcase (retorna_attrib objeto_informacoes (+ contadorAtributos 1)))))
+							(setq segundo  (vl-string-trim " "	(strcase (retorna_attrib objeto_informacoes (+ contadorAtributos 2)))))
+							(setq acao (define_a_acao_do_tap primeiro segundo))
+							
+							(if (= acao "atualizacao")
+								(progn
+									(setq primeiraLista (sparser primeiro "/")) ;Mapa base
+									(setq segundoLista (sparser segundo "/")) ;Mapa atual
+									
+									
+									(if (or  (= lista_obj_ponto_base_dc nil)  (= lista_obj_ponto_mapa_dc nil)  )
+										(progn
+											(command "layer" "m" "Erro_valores_incoerentes_DC" "c" "red" "" "")
+											(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+											(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+											(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+										)
+									)
+									
+									(setq lista_obj_ponto_base_dc (excluir_elemento_lista_quando_necessario_BASE_DC lista_obj_ponto_base_dc primeiraLista))
+									(setq lista_obj_ponto_mapa_dc (excluir_elemento_lista_quando_necessario_MAPA_DC lista_obj_ponto_mapa_dc segundoLista))
+									
+								)
+							)
+							(if (= acao "adicionar")
+								(progn
+									(setq segundoLista (sparser segundo "/")) ;Mapa atual
+									(setq lista_obj_ponto_mapa_dc (excluir_elemento_lista_quando_necessario_MAPA_DC lista_obj_ponto_mapa_dc segundoLista))
+								)
+							)
+							(if (= acao "exclusao")
+								(progn
+									(setq primeiraLista (sparser primeiro "/")) ;Mapa base
+									(setq lista_obj_ponto_base_dc (excluir_elemento_lista_quando_necessario_BASE_DC lista_obj_ponto_base_dc primeiraLista))
+								)
+							)
+							
+						)
+					)
+					
+					(if (= valA "TAP")
+						(progn
+							(setq primeiro  (vl-string-trim " "	(strcase (retorna_attrib objeto_informacoes (+ contadorAtributos 1)))))
+							(setq segundo  (vl-string-trim " "	(strcase (retorna_attrib objeto_informacoes (+ contadorAtributos 2)))))
+							
+							(setq acao (define_a_acao_do_tap primeiro segundo))
+							
+							(if (= acao "atualizacao")
+								(progn
+									(setq primeiraLista (sparser primeiro "/")) ;Mapa base
+									(setq segundoLista (sparser segundo "/")) ;Mapa atual
+									
+									
+									(if (or  (= lista_obj_ponto_base nil)  (= lista_obj_ponto_mapa nil)  )
+										(progn
+											;(command "layer" "m" "Erro_valores_incoerentes" "c" "red" "" "")
+											(command "layer" "m" "Erro_valores_incoerentes" "c" "red" "" "")
+											(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+											(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+											(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+										)
+									)
+									(setq lista_obj_ponto_base (excluir_elemento_lista_quando_necessario_BASE lista_obj_ponto_base primeiraLista))
+									(setq lista_obj_ponto_mapa (excluir_elemento_lista_quando_necessario_MAPA lista_obj_ponto_mapa segundoLista))
+									
+								)
+							)
+							
+							(if (= acao "adicionar")
+								(progn
+									(setq segundoLista (sparser segundo "/")) ;Mapa atual
+									(setq lista_obj_ponto_mapa (excluir_elemento_lista_quando_necessario_MAPA lista_obj_ponto_mapa segundoLista))
+								)
+							)
+							
+							(if (= acao "exclusao")
+								(progn
+									(setq primeiraLista (sparser primeiro "/")) ;Mapa base
+									(setq lista_obj_ponto_base (excluir_elemento_lista_quando_necessario_BASE lista_obj_ponto_base primeiraLista))
+								)
+							)
+							
+							
+							(if (and (/= segundo "0") (/= segundo ""))
+								(progn
+									
+								)
+								(progn
+									;(command "layer" "m" "Erro_valor_do_tap_vazio" "c" "red" "" "")
+									;(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+									;(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+									;(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+									;(parar)
+								)
+							)
+							
+							
+							
+						)
+					)
+					
+					(setq contadorAtributos (+ contadorAtributos 1))
+				)
+				; ====  Trata a diferença das informações que sobram nas listas dos DC(s) - i
+				(setq tamLista1 (length lista_obj_ponto_base_dc))
+				(setq tamLista2 (length lista_obj_ponto_mapa_dc))
+				
+				
+				;(parar)
+				(if (/= tamLista1 tamLista2)
+					(progn
+						(command "layer" "m" "Erro_valores_incoerentes_DC" "c" "red" "" "")
+						(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+						(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+						(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+			
+					)
+					(progn
+						
+						(if (/= tamLista1 0)
+							(progn
+								(setq tamanho5 tamLista1)
+								(while (> tamanho5 0)
+									
+									(setq elm1 (nth (- tamanho5 1) lista_obj_ponto_base_dc )  )
+									(setq elm2 (nth (- tamanho5 1) lista_obj_ponto_mapa_dc )  )
+									
+									
+									(setq info1 (getid elm1 "nome_bloco")) ;valores da base
+									(setq info2 (getid elm1 "valor"))		;valores da base
+									
+									
+									(setq info3 (retorna_attrib elm2 1)) ;valores do bloco no mapa atual
+									(if (= info3 nil)
+										(progn
+											(setq info3 "")
+										)
+									)
+									(setq info4 (strcase (cdr (assoc 2 (entget elm2))))) ;valores do bloco no mapa atual
+									
+									(if (= tamLista1 1)
+										(progn
+											;(princ (strcat  info1 "/" info4 "---" info2 "/" info3))
+											
+											(if (/=  (strcat info1 info2)  (strcat info4 info3)  )
+												(progn
+													(command "layer" "m" "Erro_valores_incoerentes_DC" "c" "red" "" "")
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+												)
+											)
+										)
+									)
+									
+									(if (> tamLista1 1)
+										(progn
+										
+											(setq lista_retorno (verifica_igualdade_nas_listas_DC lista_obj_ponto_base_dc lista_obj_ponto_mapa_dc))
+											(if (/= lista_retorno nil)
+												(progn
+													(command "layer" "m" "Erro_valores_incoerentes_DC" "c" "blue" "" "")
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+												)
+											)
+										)
+									)
+									
+									
+									(setq tamanho5 (- tamanho5 1))
+								)
+							)
+						)
+						
+					)
+				)
+				
+				
+				
+				
+				; ====  Trata a diferença das informações que sobram nas listas dos DC(s) - f
+				
+				; ====  Trata a diferença das informações que sobram nas listas dos taps - i
+				(setq tamLista1 (length lista_obj_ponto_base))
+				(setq tamLista2 (length lista_obj_ponto_mapa))
+				
+				
+				(if (/= tamLista1 tamLista2)
+					(progn
+						;(princ "\nErro -----")
+						;(parar)
+						
+						(command "layer" "m" "Erro_valores_incoerentes" "c" "red" "" "")
+						(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+						(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+						(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+			
+					)
+					(progn
+						
+						(if (/= tamLista1 0)
+							(progn
+								(setq tamanho5 tamLista1)
+								(while (> tamanho5 0)
+									
+									(setq elm1 (nth (- tamanho5 1) lista_obj_ponto_base )  )
+									(setq elm2 (nth (- tamanho5 1) lista_obj_ponto_mapa )  )
+									
+									
+									(setq info1 (getid elm1 "nome_bloco"))
+									(setq info2 (getid elm1 "valor"))
+									(setq info3 (retorna_attrib elm2 1))
+									(setq info4 (strcase (cdr (assoc 2 (entget elm2)))))
+									
+									(if (= tamLista1 1)
+										(progn
+											;(princ (strcat  info1 "/" info4 "---" info2 "/" info3))
+											
+											(if (and (/= info1 info4)  (/= info2 info3)  )
+												(progn
+													(command "layer" "m" "Erro_valores_incoerentes" "c" "red" "" "")
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+												)
+											)
+										)
+									)
+									
+									(if (> tamLista1 1)
+										(progn
+											
+											(setq lista_retorno (verifica_igualdade_nas_listas lista_obj_ponto_base lista_obj_ponto_mapa))
+											(if (/= lista_retorno nil)
+												(progn
+													(command "layer" "m" "Erro_valores_incoerentes" "c" "red" "" "")
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 8.5)
+													(command "circle" (cdr (assoc 10 (entget objeto_informacoes))) 9)
+												)
+											)
+											
+											;(parar)
+											
+											;(sam_zoom (cdr (assoc 10 (entget objeto_informacoes))) 10)
+											;(parar)
+										)
+									)
+									
+									
+									(setq tamanho5 (- tamanho5 1))
+								)
+							)
+						)
+						
+						
+					)
+				)
+				
+				; ====  Trata a diferença das informações que sobram nas listas dos taps - f
+				
+				
+				
+				
+				;=========== Ex =====================
+				;(setq quantidadeAtualizacoes (verifica_qt_atualizacoes lista_obj_ponto_base lista_obj_ponto_mapa))
+				;Veriifca se no objeto Informações tem a quantidade correta de infomrações
+				;(setq resposta1 (verifica_alteracoes_quantidade objeto_informacoes quantidadeAtualizacoes objeto_informacoes))
+				;(setq resp1 (verifica_quantidade_tap_informacoes objeto_informacoes quatidade_taps_mapa))
+				
+				
+				
+				(setq quantidade_el_lista (- quantidade_el_lista 1))
+			)
+			
+		)
+		
+	)
+)
+
+
+
+(defun verifica_igualdade_nas_listas_DC(l1 l2)
+
+	
+	(setq tam10 (length l1))
+	
+	(while (> tam10 0)
+		
+		(setq elem1 (nth (- tam10 1) l1))
+		(setq base1_info_bloco (getid elem1 "nome_bloco"))
+		(setq base1_info_valor (getid elem1 "valor"))
+		
+		(setq tamL2 (length l2))
+		(while (> tamL2 0)
+			(setq l2Elmm (nth (- tamL2 1) l2))
+			(setq info_mapa_valor (retorna_attrib l2Elmm 1))
+			(if (= info_mapa_valor nil)
+				(progn
+					(setq info_mapa_valor "")
+				)
+			)
+			(setq info_mapa_bloco (strcase (cdr (assoc 2 (entget l2Elmm)))))
+			
+			(if (= (strcat base1_info_bloco base1_info_valor ) (strcat info_mapa_bloco info_mapa_valor ) )
+				(progn
+					
+					(setq l2 (vl-remove (nth (- tamL2 1) l2) l2))
+					
+				)
+			)
+			
+			
+			(setq tamL2 (- tamL2 1))
+		)
+		;(parar)
+		
+		(setq tam10 (- tam10 1))
+	)
+	
+	;(princ "\n==============================================")
+	;(princ (strcat "\n" (rtos (length l2) 2 2)  ))
+	
+	l2
+)
+
+
+;base x mapa
+(defun verifica_igualdade_nas_listas(l1 l2)
+	(setq tam10 (length l1))
+	
+	(while (> tam10 0)
+		
+		(setq elem1 (nth (- tam10 1) l1))
+		(setq base1_info_bloco (getid elem1 "nome_bloco"))
+		(setq base1_info_valor (getid elem1 "valor"))
+		
+		(setq tamL2 (length l2))
+		(while (> tamL2 0)
+			(setq l2Elmm (nth (- tamL2 1) l2))
+			(setq info_mapa_valor (retorna_attrib l2Elmm 1))
+			(setq info_mapa_bloco (strcase (cdr (assoc 2 (entget l2Elmm)))))
+			
+			(if (and   (= info_mapa_bloco base1_info_bloco)  (= base1_info_valor info_mapa_valor)  )
+				(progn
+					
+					(setq l2 (vl-remove (nth (- tamL2 1) l2) l2))
+					
+				)
+			)
+			
+			
+			(setq tamL2 (- tamL2 1))
+		)
+		;(parar)
+		
+		(setq tam10 (- tam10 1))
+	)
+	
+	;(princ "\n==============================================")
+	;(princ (strcat "\n" (rtos (length l2) 2 2)  ))
+	
+	l2
+)
+
+;A ação do tap pode ser de atualizacao, de exclusao, ou de adição
+(defun define_a_acao_do_tap(primeiro segundo / acao)
+	(setq acao "atualizacao")
+	(if (or  (= primeiro "-") (= primeiro "0")) 
+		(progn
+			(setq acao "adicionar")
+		)
+	)
+	(if (or (= segundo "0")(= segundo "-"))
+		(progn
+			(setq acao "exclusao")
+		)
+	)
+	
+	acao
+)
+
+
+;Essa funcao retorna 0 ou 1. 1 está ok, 0 está errado
+(defun verifica_alteracoes_quantidade (obj1 qtd1 objInformacoes / qtdTapEncontrados contador2 atributoFind  retornoFuncao )
+	(setq qtdTapEncontrados 0)
+	(setq contador2 1)
+	(setq atributoFind (retorna_attrib obj1 contador2) )
+	(if (/= atributoFind nil)
+		(progn
+			(setq atributoFind (vl-string-trim " "	(strcase atributoFind)))
+		)
+	)
+	(while (/= atributoFind nil)
+		
+		(if (= atributoFind "TAP")
+			(progn
+				(setq qtdTapEncontrados (+ qtdTapEncontrados 1))
+			)
+		)
+		
+		
+		(setq contador2 (+ contador2 1))
+		(setq atributoFind (retorna_attrib objInformacoes contador2) )
+		(if (/= atributoFind nil)
+			(progn
+				(setq atributoFind (vl-string-trim " "	(strcase atributoFind)))
+			)
+		)
+	)
+	
+	(if (/= qtdTapEncontrados qtd1)
+		(progn
+			(setq retornoFuncao 0)
+		)
+		(progn
+			(setq retornoFuncao 1)
+		)
+	)
+	
+	retornoFuncao
+)
+
+
 
 (defun c:pp()
 	(setvar "cmdecho" 0)
 	(command "_osnap" "none")
 	(vl-load-com)
+	(setq ponto_tela_inicial (ViewExtents))
 	
+	(excluir_layer_clean)
 	(exclui_ponto_base)
-	
 	(gera_lista_posicao_base)
-	
 	(relaciona_leaders)
-	
 	(carrega_lista_posicao_tap)
-	
 	(carrega_arquivo)
 	
-	
+	(configura_muitos_taps)
 	(exclui_layer_descessarias)
 	
-	(alert "\nLayer geradas")
+	(princ "\n==========    LAYER GERADAS    ===============")
 	(princ "\nDivergencia2")
 	(princ "\nConfigurado_Ok")
 	(princ "\nDivergencia_Valores_incopativeis")
 	(princ "\nNomes_dos_blocos_incopativeis")
 	(princ "\nNao_Configurado")
 	(princ "\nFim...")
+	
+	(command "zoom" "w"  (nth 0 ponto_tela_inicial) (nth 1 ponto_tela_inicial))
+	
 	(princ)
 )

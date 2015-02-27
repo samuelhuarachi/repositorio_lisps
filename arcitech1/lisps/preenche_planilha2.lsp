@@ -211,7 +211,6 @@
 						(if (and (= (nth 0 valor2Sparser) procurar_por1 )  (= (nth 1 valor2Sparser) procurar_por2  )  )
 							(progn
 								(write-line (strcat "Taps - " (nth 0 valor2Sparser) " Vias;RMT10" (nth 0 valor2Sparser) "-" (nth 1 valor2Sparser) ";" (itoa (nth 1 elem)) ) ARQUIVO_CSV)
-						
 							)
 						)
 						

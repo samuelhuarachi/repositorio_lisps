@@ -61,71 +61,92 @@
 						(setq ponto1 (nth 0 ponto_leader))
 						(setq ponto2 (nth 1 ponto_leader)) ;o ponto 2 é o ponto que fica em cima da rede
 						
-						;Procura rede
-						(command "zoom" "c" ponto2 30)
-						(setq vertice1 (polar ponto2 (/ pi 4) 0.3))
-						(setq vertice2 (polar ponto2 (* (/ pi 4) 5) 0.3))
-						(command "zoom" "w" vertice1 vertice2)
-						(setq rede_find (ssget "C" vertice1 vertice2 (List (cons -4 "<AND") (cons 0 "LWPOLYLINE")   (cons 8 "NET-CBTR" )  (cons -4 "AND>")  )  ))
-						(if (/= rede_find nil)
+						(setq objInformacoes (procura_atualizacoes ponto2 ponto1))
+						(setq nomeDoBloco (strcase (cdr (assoc 2 (entget objInformacoes)))))
+						(if (= nomeDoBloco "CX_CODUPGRADECABO")
 							(progn
-								;(setq metragem (calcula_metragem_rede rede_find))
-								(setq quantidadeRedes (sslength rede_find))
-								(if (/= quantidadeRedes 1)
+								
+								;Procura rede
+								(command "zoom" "c" ponto2 30)
+								(setq vertice1 (polar ponto2 (/ pi 4) 0.8))
+								(setq vertice2 (polar ponto2 (* (/ pi 4) 5) 0.8))
+								(command "zoom" "w" vertice1 vertice2)
+								(setq rede_find (ssget "C" vertice1 vertice2 (List (cons -4 "<AND") (cons 0 "LWPOLYLINE")   (cons 8 "NET-CBTR" )  (cons -4 "AND>")  )  ))
+								
+								(if (/= rede_find nil)
 									(progn
-										(samcircle ponto2 3 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
-										(samcircle ponto2 3.5 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
-										(samcircle ponto2 4 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
-										(samcircle ponto2 4.5 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
-									)
-									(progn
-										(setq metragem (GetCurveLength (ssname rede_find 0)))
-										(command "layer" "m" "layer_temporaria4" "c" "142" "" "")
-										(command "text" "bc" ponto2 1 0 (rtos metragem 2 2))
-										
-										(if (/= metragem 0)
+										;(setq metragem (calcula_metragem_rede rede_find))
+										(setq quantidadeRedes (sslength rede_find))
+										(if (/= quantidadeRedes 1)
 											(progn
-												;Pega o valor digitado pelo usuário
-												;Procura pelo bloco que contem as infomrações digitadas pelo usuário
-												(setq objInformacoes (procura_atualizacoes ponto2 ponto1))
-												(if (/= objInformacoes nil)
+												(samcircle ponto2 3 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
+												(samcircle ponto2 3.5 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
+												(samcircle ponto2 4 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
+												(samcircle ponto2 4.5 "layer_temporariaErro_MaisRedeDeUmaRedeEncontrada" "red")
+											)
+											(progn
+												(setq metragem (GetCurveLength (ssname rede_find 0)))
+												(command "layer" "m" "layer_temporaria4" "c" "142" "" "")
+												(command "text" "bc" ponto2 1 0 (rtos metragem 2 2))
+												
+												(if (/= metragem 0)
 													(progn
-														(setq metragem_usuario (atof (retorna_attrib objInformacoes 4)))
-														(setq valorMaxMin (* metragem  (/  (- 100.000 tolerancia) 100.000)   ))
-														(setq differenca (- metragem valorMaxMin))
+														;Pega o valor digitado pelo usuário
+														;Procura pelo bloco que contem as infomrações digitadas pelo usuário
 														
-														(setq valorMin (- metragem differenca))
-														(setq valorMax (+ metragem differenca))
-														
-														(if (and (> metragem_usuario valorMin)   (< metragem_usuario valorMax)  )
+														(if (/= objInformacoes nil)
 															(progn
+																(setq metragem_usuario (atof (retorna_attrib objInformacoes 4)))
+																(setq valorMaxMin (* metragem  (/  (- 100.000 tolerancia) 100.000)   ))
+																(setq differenca (- metragem valorMaxMin))
 																
-															)
-															(progn
-																;(command "layer" "m" "layer_temporariaErro" "c" "red" "" "")
-																;samcircle_p_OOOraios_OOOlayername_OOOcolor
+																(setq valorMin (- metragem differenca))
+																(setq valorMax (+ metragem differenca))
 																
-																(samcircle ponto2 3 "layer_temporariaErro" "red")
-																(samcircle ponto2 3.5 "layer_temporariaErro" "red")
-																(samcircle ponto2 4 "layer_temporariaErro" "red")
-																(samcircle ponto2 4.5 "layer_temporariaErro" "red")
+																(if (and (> metragem_usuario valorMin)   (< metragem_usuario valorMax)  )
+																	(progn
+																		
+																	)
+																	(progn
+																		;(command "layer" "m" "layer_temporariaErro" "c" "red" "" "")
+																		;samcircle_p_OOOraios_OOOlayername_OOOcolor
+																		
+																		(samcircle ponto2 3 "layer_temporariaErro" "red")
+																		(samcircle ponto2 3.5 "layer_temporariaErro" "red")
+																		(samcircle ponto2 4 "layer_temporariaErro" "red")
+																		(samcircle ponto2 4.5 "layer_temporariaErro" "red")
+																	)
+																)
+																
 															)
 														)
 														
+														
+														
 													)
 												)
-												
-												
-												
+											
 											)
 										)
-									
+										
+										
+									)
+									(progn
+										(samcircle ponto2 3 "layer_temporariaErro_RedeNaoEncontrada" "blue")
+										(samcircle ponto2 3.5 "layer_temporariaErro_RedeNaoEncontrada" "blue")
+										(samcircle ponto2 4 "layer_temporariaErro_RedeNaoEncontrada" "blue")
+										(samcircle ponto2 4.5 "layer_temporariaErro_RedeNaoEncontrada" "blue")
+										
 									)
 								)
 								
-								
+										
+										
+										
 							)
 						)
+						
+						
 						
 						;(getstring "samuel")
 					)
@@ -211,7 +232,7 @@
 )
 
 (defun apaga_layers_desnecessarias_002()
-	(setq all (ssget "X" '((8 . "layer_temporariaErro,layer_temporariaErro_MaisRedeDeUmaRedeEncontrada"))))
+	(setq all (ssget "X" '((8 . "layer_temporariaErro,layer_temporariaErro_MaisRedeDeUmaRedeEncontrada,layer_temporariaErro_RedeNaoEncontrada"))))
 	(sam_delete all)
 )
 
@@ -259,6 +280,7 @@
 	(princ "\n=========   LAYERS GERADAS  =================")
 	(princ "\n 'layer_temporariaErro'")
 	(princ "\n 'layer_temporariaErro_MaisRedeDeUmaRedeEncontrada'")
+	(princ "\n 'layer_temporariaErro_RedeNaoEncontrada'")
 	
 	(princ)
 )

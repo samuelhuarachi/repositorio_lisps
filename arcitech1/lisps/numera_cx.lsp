@@ -5,7 +5,7 @@
 (defun percorre_cxcabo()
 	;(setq all (ssget "X" '((8 . "LAYER"))))
 	;(setq all (ssget "x" (List (cons 2 "CX_CodUpgradeCabo"))))
-	(setq all (ssget "x" '((-4 . "<AND") (2 . "CX_CodUpgradeCabo")(0 . "INSERT")(-4 . "AND>"))))
+	(setq all (ssget "x" '((-4 . "<AND") (2 . "CX_CodUpgradeCabo,CX_CodUpgrade")(0 . "INSERT")(-4 . "AND>"))))
 	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
 	(setq contador_num 1 )
 	(if (/= all nil)

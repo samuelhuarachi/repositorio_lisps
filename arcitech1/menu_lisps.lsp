@@ -47,6 +47,7 @@
 	(vl-load-com)
 	
 	(setq valid_option nil)
+	(command "_textscr")
 	(while (= valid_option nil)
 		
 		(princ "\n### Comandos disponíveis ###")
@@ -59,12 +60,13 @@
 		(princ "\n[6] - Relatório")
 		(princ "\n[7] - Numera CX_CodUpgradeCabo")
 		(princ "\n[8] - Verifica comprimento dos cabos")
+		(princ "\n[9] - Excluir rede")
 		
 		(princ "\n[s] - Sair")
 		(princ "\nDigite a opção: ")
 		
 		(setq opcao (getstring))
-		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "S")))
+		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "S")))
 		(if (= valid_option nil )
 			(progn
 				(princ "\n### Opção inválida! ###")
@@ -129,6 +131,13 @@
 							(progn
 								(load (strcat basePath "lisps\\calcula_metragem_cabo.lsp"))
 								(c:calcula_metragem_cabo)
+							)
+						)
+						
+						(if (= (strcase opcao) "9" )
+							(progn
+								(load (strcat basePath "lisps\\excluir_rede.lsp"))
+								(c:excluir_rede)
 							)
 						)
 						
