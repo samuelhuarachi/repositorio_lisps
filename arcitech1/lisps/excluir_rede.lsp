@@ -7,8 +7,9 @@
 	(setq pontoAntigo nil)
 	(while (/= elemento nil)
 		(setq elemento (nth contador (entget obj)))
+		(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
 		
-		(if (/= elemento nil)
+		(if (and (/= layerName "QUADRA") (/= layerName "LIMITE") (/= elemento nil)  ) 
 			(progn
 				(setq id1 (car elemento))
 				(if (= id1 10)
@@ -59,7 +60,7 @@
 	(vl-load-com)
 	
 	(princ "\nSelecione a rede")
-	(setq all (ssget '((-4 . "<AND") (8 . "NET-CBTR")(0 . "LWPOLYLINE")(-4 . "AND>"))))
+	(setq all (ssget '((-4 . "<AND") (8 . "*")(0 . "LWPOLYLINE")(-4 . "AND>"))))
 	
 	(if (/= all nil)
 		(progn
