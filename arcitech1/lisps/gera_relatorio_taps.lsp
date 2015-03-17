@@ -8,8 +8,7 @@
 			(setq qtd2  (sslength textos))
 			(if (/= qtd2 1)
 				(progn
-					(command "circle" c 10)
-					(sam_zoom c 10)
+					(f_nao_configurado2 c)
 					;(parar)
 				)
 				(progn
@@ -19,10 +18,11 @@
 			
 		)
 		(progn
-			(command "circle" c 10)
-			(command "circle" (polar c (/ pi 4) 3) 2)
-			(command "circle" (polar c (* (/ pi 4) 5) 3) 2)
-			(sam_zoom c 10)
+			(f_nao_configurado2 c)
+			;(command "circle" c 10)
+			;(command "circle" (polar c (/ pi 4) 3) 2)
+			;(command "circle" (polar c (* (/ pi 4) 5) 3) 2)
+			;(sam_zoom c 10)
 			;(parar)
 		)
 	)
@@ -59,7 +59,18 @@
 				;Trata os taps
 				(setq resp (vl-string-search "TAP" blockName))
 				(setq numeroTap (retorna_attrib obj 1))
-				(if (and (= numeroTap nil)  (/= resp nil)  )
+				(if (/= numeroTap nil)
+					(progn
+						(setq num1 (atof numeroTap))
+						(if (= num1 0)
+							(progn
+								(setq numeroTap nil)
+							)
+						)
+					)
+				)
+				
+				(if (and (or (= numeroTap "CADHB4")  (= numeroTap nil) )  (/= resp nil)  )
 					(progn
 						(if (= blockName "2HOTTAP")
 							(progn
@@ -76,7 +87,7 @@
 					(progn
 						(if (or  (= numeroTap nil) (= numeroTap "") )
 							(progn
-								(f_nao_configurado)
+								(f_nao_configurado2 coord)
 							)
 							(progn
 								
@@ -92,7 +103,6 @@
 										
 										(setq lista_relatorio (subst (list chave total2)  (assoc chave lista_relatorio)  lista_relatorio  ))
 										
-										
 									)
 								)
 								
@@ -100,7 +110,7 @@
 						)
 					)
 					(progn
-						(f_nao_configurado)
+						;(f_nao_configurado2 coord)
 					)
 				)
 				
@@ -113,8 +123,21 @@
 	
 )
 
+(defun f_nao_configurado2(c)
+	(command "layer" "m" "Nao_Configurado" "c" "green" "" "")
+	(command "circle" c 11)
+	(command "circle" c 12)
+)
+
+
+
 (defun abre_arq()
-	(setq  ARQUIVO_CSV (open (getfiled (strcat "Escolha a Pasta") "" "csv" 1) "w"))
+	
+	(setq pathMapProject (getvar "DWGPREFIX"))
+	(setq dwgNameFile (getvar "DWGNAME"))
+	(setq nomeDaPasta   (vl-string-subst  ".csv" ".dwg" dwgNameFile) )
+	(setq nomeDaPasta   (vl-string-subst  ".csv" ".DWG" nomeDaPasta) )
+	(setq  ARQUIVO_CSV (open (strcat pathMapProject nomeDaPasta) "w"))
 )
 
 (defun fecha()
@@ -176,9 +199,28 @@
 				(setq x1 (rtos (car coord) 2 3))
 				(setq y1 (rtos (cadr coord) 2 3))
 				
-				(if (= blockName "DC01")
+				(if (or (= blockName "2WAY01")  (= blockName  "2W")  (= blockName "DC01") )
 					(progn
 						(setq numeroTap (retorna_attrib obj 1))
+						
+						(if (/= numeroTap nil)
+							(progn
+								(setq num1 (atof numeroTap))
+								(if (= num1 0)
+									(progn
+										(setq numeroTap nil)
+									)
+								)
+							)
+						)
+						(if (= numeroTap nil)
+							(progn
+								(setq numeroTap "000")
+							)
+							
+						)
+						
+						
 						
 						(setq chave (strcat blockName "-" numeroTap))
 						(setq procura2 (assoc chave lista_relatorio_dc))
@@ -226,20 +268,25 @@
 	(percorre_elementos)
 	(percorre_dc)
 	
-	(if (/= lista_relatorio nil)
+	(if (or (/= lista_relatorio_dc nil)  (/= lista_relatorio nil) )
 		(progn
+		
 			(abre_arq)
 			(write-line "nome bloco;numero;quantidade" ARQUIVO_CSV)
-			(grava_info12)
+
+			(if (/= lista_relatorio nil)
+				(progn
+					(grava_info12)
+			))
 			(if (/= lista_relatorio_dc nil)
 				(progn
 					(grava_info12_dc)
 			))
 			
 			(fecha)
+			
 		)
 	)
-	
 	
 	(princ)
 )
