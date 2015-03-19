@@ -21,6 +21,23 @@
 )
 
 
+(defun distancia_ponto_reta (ponto1 ponto2 ponto_insercao)
+ 
+ (setq a (- (nth 1 ponto1)(nth 1 ponto2)))
+ (setq b (- (nth 0 ponto2)(nth 0 ponto1)))
+ (setq c (- (* (nth 0 ponto1) (nth 1 ponto2)) (* (nth 0 ponto2) (nth 1 ponto1)) ))
+ 
+ (setq result (/ (+ (* a (nth 0 ponto_insercao)) (* b (nth 1 ponto_insercao)) c)   (sqrt (+ (* a a) (* b b))) ))
+ 
+ (if (< result 0)
+  (progn
+   (setq result (* result -1))
+  )
+ )
+ result
+)
+
+
 (defun CriarLink (ent link codigo)
 	(if (not (tblsearch "APPID" link)) (regapp link))
 	(if (= (type codigo) 'STR)
@@ -560,6 +577,11 @@
 	
 	
 	(princ)
+)
+
+;Envia o ângulo em graus, e retorna radianos
+(defun samuel_radianos(angulo)
+	(/ (* ANGULO pi) 180)
 )
 
 

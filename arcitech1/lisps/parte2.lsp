@@ -426,12 +426,9 @@
 										
 									)
 									(progn
-										
 										(setq objPolyline (procura_polyline coord2 coord1))
 									)
 								)
-								
-								
 							)
 						)
 						
@@ -440,7 +437,6 @@
 						
 						(if (and (/= objInformacoes nil) (/= objPolyline nil))
 							(progn
-								
 								
 								(setq listaObjetoPolyline (pontos_polyline objPolyline  ))
 								(command "zoom" "c" (nth 0 listaObjetoPolyline) 50)

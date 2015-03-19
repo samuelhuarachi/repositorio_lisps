@@ -31,10 +31,9 @@
 )
 
 (defun percorre_elementos()
-	
 	;(setq all (ssget "X" '((8 . "LAYER"))))
 	;(setq all (ssget "x" (List (cons 8 layer))))
-	(setq all (ssget "x" '((-4 . "<AND") (8 . "TPSYM01")(0 . "INSERT")(-4 . "AND>"))))
+	(setq all (ssget "x" '((-4 . "<AND") (8 . "TPSYM01,NET-TAP")(0 . "INSERT")(-4 . "AND>"))))
 	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
 	(setq lista_dos_blocos nil)
 	(setq lista_relatorio nil)
@@ -95,14 +94,33 @@
 								(setq procura2 (assoc chave lista_relatorio))
 								(if (= procura2 nil)
 									(progn
+										(command "layer" "m" "tap_verificado" "c" "green" "" "")
+										(command "circle" coord 0.3)
+										(command "circle" coord 0.4)
+										(command "circle" coord 0.5)
+										(command "circle" coord 0.6)
+										(command "circle" coord 0.7)
+										(command "circle" coord 0.8)
+										(command "circle" coord 0.9)
+										(command "circle" coord 1)
+										
 										(setq lista_relatorio (cons (list chave 1) lista_relatorio))
 									)
 									(progn
+										(command "layer" "m" "tap_verificado" "c" "green" "" "")
+										(command "circle" coord 0.3)
+										(command "circle" coord 0.4)
+										(command "circle" coord 0.5)
+										(command "circle" coord 0.6)
+										(command "circle" coord 0.7)
+										(command "circle" coord 0.8)
+										(command "circle" coord 0.9)
+										(command "circle" coord 1)
+										
 										(setq total2 (nth 1 procura2))
 										(setq total2 (+ total2 1))
 										
 										(setq lista_relatorio (subst (list chave total2)  (assoc chave lista_relatorio)  lista_relatorio  ))
-										
 									)
 								)
 								
@@ -184,7 +202,7 @@
 
 	;(setq all (ssget "X" '((8 . "LAYER"))))
 	;(setq all (ssget "x" (List (cons 8 layer))))
-	(setq all (ssget "x" '((-4 . "<AND") (8 . "CPSYM01")(0 . "INSERT")(-4 . "AND>"))))
+	(setq all (ssget "x" '((-4 . "<AND") (8 . "CPSYM01,NET-SPLT")(0 . "INSERT")(-4 . "AND>"))))
 	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
 	(setq lista_blocos_dc nil)
 	(setq lista_relatorio_dc nil)
@@ -199,7 +217,7 @@
 				(setq x1 (rtos (car coord) 2 3))
 				(setq y1 (rtos (cadr coord) 2 3))
 				
-				(if (or (= blockName "2WAY01")  (= blockName  "2W")  (= blockName "DC01") )
+				(if (or (= blockName "2WAY01")  (= blockName  "2W")  (= blockName "DC01") (= blockName "DC") )
 					(progn
 						(setq numeroTap (retorna_attrib obj 1))
 						
@@ -227,12 +245,30 @@
 						(if (= procura2 nil)
 							(progn
 								(setq lista_relatorio_dc (cons (list chave 1) lista_relatorio_dc))
+								(command "layer" "m" "tap_verificado" "c" "green" "" "")
+								(command "circle" coord 0.3)
+								(command "circle" coord 0.4)
+								(command "circle" coord 0.5)
+								(command "circle" coord 0.6)
+								(command "circle" coord 0.7)
+								(command "circle" coord 0.8)
+								(command "circle" coord 0.9)
+								(command "circle" coord 1)
 							)
 							(progn
 								(setq total2 (nth 1 procura2))
 								(setq total2 (+ total2 1))
 								
 								(setq lista_relatorio_dc (subst (list chave total2)  (assoc chave lista_relatorio_dc)  lista_relatorio_dc  ))
+								(command "layer" "m" "tap_verificado" "c" "green" "" "")
+								(command "circle" coord 0.3)
+								(command "circle" coord 0.4)
+								(command "circle" coord 0.5)
+								(command "circle" coord 0.6)
+								(command "circle" coord 0.7)
+								(command "circle" coord 0.8)
+								(command "circle" coord 0.9)
+								(command "circle" coord 1)
 								
 								
 							)

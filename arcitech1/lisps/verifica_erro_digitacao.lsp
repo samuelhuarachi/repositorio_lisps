@@ -1,4 +1,4 @@
-
+﻿
 
 
 
@@ -76,6 +76,59 @@
 	)
 )
 
+(defun percorre_objetos2()
+	;(setq all (ssget "X" '((8 . "LAYER"))))
+	(setq all (ssget "x" (List (cons 2 "CX_CodUpgradeCabo"))))
+	;(setq all (ssget "x" '((-4 . "<AND") (8 . "ESPECIAL")(0 . "TEXT")(-4 . "AND>"))))
+	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+	(if (/= all nil)
+		(progn
+			(setq qtd (- (sslength all) 1))
+			(while (>= qtd 0)
+				(setq obj (ssname all qtd))
+				(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
+				(setq coord (cdr (assoc 10 (entget obj))))
+				(setq x1 (rtos (car coord) 2 3))
+				(setq y1 (rtos (cadr coord) 2 3))
+				(setq rettt (vl-string-trim " " (strcase (retorna_attrib obj 2) ) ))
+				(if (and (/= rettt "RETIRAR")  (/= rettt "LANCAR") )
+					(progn
+						
+						(setq lista (vl-string->list rettt))
+						(setq lista (vl-remove (ascii "Ç") lista))
+						
+						(if (= (length lista) 6)
+							(progn
+								(if  (and  (=  (nth 0 lista) 76 )   (=  (nth 3 lista) 199 ) (=  (nth 1 lista) 65 ) ) 
+									(progn
+										(setq novo (cons 1 "Lancar"))
+										(setq trocar (subst novo (assoc 1 (entget (entnext (entnext  obj)))) (entget (entnext (entnext  obj)))))
+										(entmod trocar)
+									)
+									(progn
+										(command "layer" "m" "erro_digitacao" "c" "red" "" "")
+										(command "circle" coord 7)
+										(command "circle" coord 8)
+									)
+								)
+							)
+							(progn
+								(command "layer" "m" "erro_digitacao" "c" "red" "" "")
+								(command "circle" coord 7)
+								(command "circle" coord 8)
+							)
+						)
+						
+					
+						
+					)
+				)
+				(setq qtd (- qtd 1))
+			)
+		)
+	)
+)
+
 
 (defun c:verifica_erro_digitacao()
 	(setvar "cmdecho" 0)
@@ -83,6 +136,7 @@
 	(vl-load-com)
 	
 	(percorre_objetos1)
+	(percorre_objetos2)
 	
 	
 	(princ)

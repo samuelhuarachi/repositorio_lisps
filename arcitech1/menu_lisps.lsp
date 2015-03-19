@@ -4,12 +4,8 @@
 	(setq comprimento_array (length lista))
 	(setq lista1 nil)
 	(while (> comprimento_array 0)
-		
 		(setq elem (nth (- comprimento_array 1)  lista ) )
-		
-		
 		(setq lista1 (cons (list elem) lista1))
-		
 		(setq comprimento_array (- comprimento_array 1))
 	)
 	
@@ -64,13 +60,14 @@
 		(princ "\n[10] - Gera relatório / Quantidade de TAP(s) e DC(s)")
 		(princ "\n[11] - BATCHLISP")
 		(princ "\n[12] - Verifica erro de digitação")
+		(princ "\n[13] - Amplificadores / Conectores / Ks. Contagem")
 		
 		
 		(princ "\n[s] - Sair")
 		(princ "\nDigite a opção: ")
 		
 		(setq opcao (getstring))
-		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "S")))
+		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "S")))
 		(if (= valid_option nil )
 			(progn
 				(princ "\n### Opção inválida! ###")
@@ -166,6 +163,12 @@
 							)
 						)
 						
+						(if (= (strcase opcao) "13" )
+							(progn
+								(load (strcat basePath "lisps\\amplificadores_conectores_ks.lsp"))
+								(c:amplificadores_conectores_ks)
+							)
+						)
 					)
 					(progn
 						(princ "\nSaindo da aplicação...")

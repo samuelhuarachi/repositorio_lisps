@@ -1,10 +1,15 @@
-﻿(defun soma_cabos()
+﻿
+
+
+(defun soma_cabos()
 	(verifica_duplicidade "NET_UPGRADE" "INSERT")
 	(setq lista_soma_cabos nil)
 	(setq all (ssget "X" '((2 . "CX_CodUpgradeCabo"))))
 	;(setq all (ssget "x" (List (cons 8 layer))))
 	;(setq all (ssget "x" '((-4 . "<AND") (8 . "ESPECIAL")(0 . "TEXT")(-4 . "AND>"))))
 	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+	(setq qtdLancar500 0)
+	(setq qtdLancar750 0)
 	(if (/= all nil)
 		(progn
 			(setq qtd (- (sslength all) 1))
@@ -37,6 +42,19 @@
 						(setq lista_soma_cabos (cons (list (strcat value2 value3) comprimento ) lista_soma_cabos))
 					)
 				)
+				
+				;Calcular quantos conectores existem
+				(if (= chave1 "LANCAR500")
+					(progn
+						(setq qtdLancar500 (+ qtdLancar500 1))
+					)
+				)
+				(if (= chave1 "LANCAR750")
+					(progn
+						(setq qtdLancar750 (+ qtdLancar750 1))
+					)
+				)
+				
 				
 				(setq qtd (- qtd 1))
 			)
@@ -246,20 +264,18 @@
 				
 				(if (and   (= achouFlag 0) (= (nth 0 valor2Sparser) valor1)   (= (nth 1 valor2Sparser) valor2)  )
 					(progn
-						
 						(write-line (strcat "Taps - " valor1 " Vias;SAT" valor1 "G-" valor2 ";" (itoa (nth 1 elem))) ARQUIVO_CSV)
 						(setq achouFlag 1)
 					)
 				)
 			)
 		)
-		
 		(setq contador002 (+ contador002 1))
 	)
 	
 	(if  (= achouFlag 0)
 		(progn
-			(write-line (strcat "Taps - " valor1 " Vias;SAT" valor1 "G-" valor2 ";")  ARQUIVO_CSV  )
+			(write-line (strcat "Taps - " valor1 " Vias;SAT" valor1 "G-" valor2 ";0")  ARQUIVO_CSV  )
 		)
 	)
 	
@@ -289,7 +305,7 @@
 				;(setq lista_fwpad (vl-remove (assoc (itoa contador01) lista_fwpad) lista_fwpad) )
 			)
 			(progn
-				(write-line (strcat "Forward Pads;FP -" (itoa contador01) ";") ARQUIVO_CSV)
+				(write-line (strcat "Forward Pads;FP -" (itoa contador01) ";0") ARQUIVO_CSV)
 			)
 		)
 		(setq contador01 (+ contador01 1))
@@ -306,7 +322,7 @@
 				(setq lista_rpad (vl-remove (assoc (itoa contador01) lista_rpad) lista_rpad) )
 			)
 			(progn
-				(write-line (strcat "Return Pads;RP - " (itoa contador01) ";") ARQUIVO_CSV)
+				(write-line (strcat "Return Pads;RP - " (itoa contador01) ";0") ARQUIVO_CSV)
 			)
 		)
 		(setq contador01 (+ contador01 1))
@@ -333,7 +349,6 @@
 	(write-line (strcat "Forward Equalizers;FEQ-10.5;" (itoa FEQ_105)) ARQUIVO_CSV)
 	
 	
-	
 	(setq contador01 0)
 	(while (<= contador01 12)
 		(setq ppp (assoc (itoa contador01) lista_req))
@@ -344,7 +359,7 @@
 				(setq lista_req (vl-remove (assoc (itoa contador01) lista_req) lista_req) )
 			)
 			(progn
-				(write-line (strcat "Return Equalizers;REQ-" (itoa contador01) ";") ARQUIVO_CSV)
+				(write-line (strcat "Return Equalizers;REQ-" (itoa contador01) ";0") ARQUIVO_CSV)
 			)
 		)
 		(setq contador01 (+ contador01 1))
@@ -394,7 +409,7 @@
 			(write-line (strcat "Couplers Externos;SAS2G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "Couplers Externos;SAS2G;"  ) ARQUIVO_CSV)
+			(write-line (strcat "Couplers Externos;SAS2G;0"  ) ARQUIVO_CSV)
 		)
 	)
 	
@@ -405,7 +420,7 @@
 			(write-line (strcat "Couplers Externos;SAS3UG;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "Couplers Externos;SAS3UG;"  ) ARQUIVO_CSV)
+			(write-line (strcat "Couplers Externos;SAS3UG;0"  ) ARQUIVO_CSV)
 		)
 	)
 	
@@ -418,7 +433,7 @@
 			(write-line (strcat "Couplers Externos;SADC8G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "Couplers Externos;SADC8G;") ARQUIVO_CSV)
+			(write-line (strcat "Couplers Externos;SADC8G;0") ARQUIVO_CSV)
 		)
 	)
 	
@@ -430,7 +445,7 @@
 			(write-line (strcat "Couplers Externos;SADC12G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "Couplers Externos;SADC12G;" ) ARQUIVO_CSV)
+			(write-line (strcat "Couplers Externos;SADC12G;0" ) ARQUIVO_CSV)
 		)
 	)
 	
@@ -446,9 +461,9 @@
 	;	)
 	;)
 	
-	(write-line (strcat "Couplers Internos;GM-Plugin-2Way;"  ) ARQUIVO_CSV)
-	(write-line (strcat "Couplers Internos;GM-Plugin-DC8;"  ) ARQUIVO_CSV)
-	(write-line (strcat "Couplers Internos;GM-Plugin-DC12;"  ) ARQUIVO_CSV)
+	(write-line (strcat "Couplers Internos;GM-Plugin-2Way;0"  ) ARQUIVO_CSV)
+	(write-line (strcat "Couplers Internos;GM-Plugin-DC8;0"  ) ARQUIVO_CSV)
+	(write-line (strcat "Couplers Internos;GM-Plugin-DC12;0"  ) ARQUIVO_CSV)
 	
 	;(write-line "Couplers Internos;7-DC-4-5-1000;" ARQUIVO_CSV)
 	;(write-line "Couplers Internos;7-DC-8-5-1000;" ARQUIVO_CSV)
@@ -458,9 +473,9 @@
 	
 	
 	
-	(write-line "Fontes;LPI;" ARQUIVO_CSV)
+	(write-line "Fontes;LPI;0" ARQUIVO_CSV)
 
-	(write-line "Fontes;90V - 15A;" ARQUIVO_CSV)
+	(write-line "Fontes;90V - 15A;0" ARQUIVO_CSV)
 	
 	(setq find1 "EQ/1")
 	(setq procura2 (assoc find1 lista_relatorio) )
@@ -469,7 +484,7 @@
 			(write-line (strcat "EQ Linha;FFE-8-100N;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "EQ Linha;FFE-8-100N;"  ) ARQUIVO_CSV)
+			(write-line (strcat "EQ Linha;FFE-8-100N;0"  ) ARQUIVO_CSV)
 		)
 	)
 	
@@ -480,7 +495,7 @@
 			(write-line (strcat "Cabos;.500;"  (nth 1 procura2) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "Cabos;.500;"  ) ARQUIVO_CSV)
+			(write-line (strcat "Cabos;.500;0"  ) ARQUIVO_CSV)
 		)
 	)
 	(setq find1 "LANCAR750")
@@ -490,17 +505,20 @@
 			(write-line (strcat "Cabos;.750;"  (nth 1 procura2) ) ARQUIVO_CSV)
 		)
 		(progn
-			(write-line (strcat "Cabos;.750;"  ) ARQUIVO_CSV)
+			(write-line (strcat "Cabos;.750;0"  ) ARQUIVO_CSV)
 		)
 	)
 	
 	;CABOS
 	;CABOS
 	
-	(write-line "Conectores;PIN-500;" ARQUIVO_CSV)
-	(write-line "Conectores;PIN-750;" ARQUIVO_CSV)
-	(write-line "HP;HP;" ARQUIVO_CSV)
-	(write-line "KM (STRAND);KM (STRAND);" ARQUIVO_CSV)
+	;(setq qtdLancar500 0)
+	;(setq qtdLancar750 0)	
+	(write-line (strcat "Conectores;PIN-500;" (itoa (* qtdLancar500 2) )  ) ARQUIVO_CSV)
+	(write-line (strcat "Conectores;PIN-750;" (itoa (* qtdLancar750 2) )  ) ARQUIVO_CSV)
+	(write-line "HP;HP;0" ARQUIVO_CSV)
+	(write-line "KM (STRAND);KM (STRAND);0" ARQUIVO_CSV)
+	
 	
 	;lista_soma_cabos
 	
@@ -522,7 +540,7 @@
 
 (defun carrega_planilha_amplificadores()
 	
-	(setq ARQUIVO_CSV (open (getfiled "Selecione a tabela dos amplificadores" "C:\\" "csv" 0)  "r")
+	(setq ARQUIVO_CSV (open (getfiled "Selecione a tabela dos amplificadores" (getvar "DWGPREFIX") "csv" 0)  "r")
  ;(setq ARQUIVO_CSV (open "//ipanema/lisp/NET/TIPO_RUAS.csv" "r"))
 ;(setq ARQUIVO_CSV (getfiled "//ipanema/lisp/NET/TIPO_RUAS.csv" 0))
 	;(setq ARQUIVO_CSV (open "C:\\Bandeirante_Gecad\\Lista_IP.csv" "r")
@@ -571,7 +589,7 @@
 				(setq modelo (nth 2 LISTA_LINHA))
 				(if (/= modelo "")
 					(progn
-						(if (= modelo "GNMKR_LE_THERM")
+						(if (= modelo "GNMKR LE THERM")
 							(progn
 								(setq GNMKR_LE_THERM (+ GNMKR_LE_THERM 1))
 							)
