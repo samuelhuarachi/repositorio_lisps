@@ -367,12 +367,6 @@
 	
 	
 	;trata os taps
-	;lista_relatorio
-	;lista_soma_cabos
-	
-	;(extrai_tap1)
-	;lista_relatorio
-	
 	(extrair_tap01 "2" "4")
 	(extrair_tap01 "2" "8")
 	(extrair_tap01 "2" "11")
@@ -391,16 +385,6 @@
 	(extrair_tap01 "8" "17")
 	(extrair_tap01 "8" "20")
 	(extrair_tap01 "8" "23")
-	
-	
-	;(write-line (strcat "Couplers Externos;SAS2G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;(write-line (strcat "Couplers Externos;SAS3UG;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;(write-line (strcat "Couplers Externos;SADC8G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;(write-line (strcat "Couplers Externos;SADC12G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;(write-line (strcat "Couplers Internos;GM-Plugin-2Way;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;(write-line (strcat "Couplers Internos;GM-Plugin-DC8;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;(write-line (strcat "Couplers Internos;GM-Plugin-DC12;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	
 	
 	(setq find1 "2WAY/1")
 	(setq procura2 (assoc find1 lista_relatorio) )
@@ -423,8 +407,6 @@
 			(write-line (strcat "Couplers Externos;SAS3UG;0"  ) ARQUIVO_CSV)
 		)
 	)
-	
-	
 	
 	(setq find1 "DC8/1")
 	(setq procura2 (assoc find1 lista_relatorio) )
@@ -449,28 +431,9 @@
 		)
 	)
 	
-	
-	;(setq find1 "DC16/1")
-	;(setq procura2 (assoc find1 lista_relatorio) )
-	;(if (/= procura2 nil)
-	;	(progn
-	;		(write-line (strcat "Couplers Externos;RLDC10-16;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
-	;	)
-	;	(progn
-	;		(write-line (strcat "Couplers Externos;RLDC10-16;"   ) ARQUIVO_CSV)
-	;	)
-	;)
-	
-	(write-line (strcat "Couplers Internos;GM-Plugin-2Way;0"  ) ARQUIVO_CSV)
-	(write-line (strcat "Couplers Internos;GM-Plugin-DC8;0"  ) ARQUIVO_CSV)
-	(write-line (strcat "Couplers Internos;GM-Plugin-DC12;0"  ) ARQUIVO_CSV)
-	
-	;(write-line "Couplers Internos;7-DC-4-5-1000;" ARQUIVO_CSV)
-	;(write-line "Couplers Internos;7-DC-8-5-1000;" ARQUIVO_CSV)
-	;(write-line "Couplers Internos;7-DC-12-5-1000;" ARQUIVO_CSV)
-	
-	
-	
+	(write-line (strcat "Couplers Internos;GM-Plugin-2Way;" (itoa GM_Plugin_2Way) ) ARQUIVO_CSV)
+	(write-line (strcat "Couplers Internos;GM-Plugin-DC8;" (itoa GM_Plugin_DC8)   ) ARQUIVO_CSV)
+	(write-line (strcat "Couplers Internos;GM-Plugin-DC12;" (itoa GM_Plugin_DC12 )   ) ARQUIVO_CSV)
 	
 	
 	(write-line "Fontes;LPI;0" ARQUIVO_CSV)
@@ -510,18 +473,12 @@
 	)
 	
 	;CABOS
-	;CABOS
-	
-	;(setq qtdLancar500 0)
-	;(setq qtdLancar750 0)	
 	(write-line (strcat "Conectores;PIN-500;" (itoa (* qtdLancar500 2) )  ) ARQUIVO_CSV)
 	(write-line (strcat "Conectores;PIN-750;" (itoa (* qtdLancar750 2) )  ) ARQUIVO_CSV)
 	(write-line "HP;HP;0" ARQUIVO_CSV)
 	(write-line "KM (STRAND);KM (STRAND);0" ARQUIVO_CSV)
 	
-	
 	;lista_soma_cabos
-	
 	(fecha)
 )
 
@@ -580,12 +537,39 @@
    (setq FEQ_C49 0)
    (setq FEQ_C65 0)
    (setq FEQ_C81 0)
+   (setq GM_Plugin_2Way 0)
+   (setq GM_Plugin_DC8 0)
+   (setq GM_Plugin_DC12 0)
+   
    
    (while (/= LINHA_CSV nil)
 		(setq LISTA_LINHA (sparser LINHA_CSV ";"))
 		(if (> (length LISTA_LINHA) 4)
 			(progn
 			
+			
+				(setq d_interno (nth 18 LISTA_LINHA))
+				(if (/= d_interno "")
+					(progn
+						(if (= d_interno "GM-Plugin-DC12")
+							(progn
+								(setq GM_Plugin_DC12 (+ GM_Plugin_DC12 1))
+							)
+						)
+						(if (= d_interno "GM-Plugin-2Way")
+							(progn
+								(setq GM_Plugin_2Way (+ GM_Plugin_2Way 1))
+							)
+						)
+						(if (= d_interno "GM-Plugin-DC8")
+							(progn
+								(setq GM_Plugin_DC8 (+ GM_Plugin_DC8 1))
+							)
+						)
+					)
+				)
+				
+				
 				(setq modelo (nth 2 LISTA_LINHA))
 				(if (/= modelo "")
 					(progn

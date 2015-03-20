@@ -129,6 +129,8 @@
 	(setq lista_contagem nil)
 	(setq pin500 0)
 	(setq ks 0)
+	(setq todos_cabos_mapa nil)
+	(setq lista_controle nil)
 	
 	(if (/= all nil)
 		(progn
@@ -161,9 +163,15 @@
 									(setq block4Name (strcase (cdr (assoc 2 (entget obj4)))))
 									
 									(command "layer" "m" "linha_perimetro" "c" "yellow" "" "")
-									(procura_redes_connect obj4)
+									(setq lista_cabos (procura_redes_connect obj4))
 									
-									
+									(if (/= (vl-string-search "LPI" block4Name) nil)
+										(progn
+											;Estaremos tratando as fontes
+											(setq ks (+ ks 1))
+											(setq lista_log1 (strcat lista_log1 " ### LPI(fonte) "))
+										)
+									)
 									(if (= block4Name "LE")
 										(progn
 											(setq pin500 (+ pin500 2))
@@ -183,52 +191,85 @@
 										)
 									)
 									
-									
 									(if (/= (vl-string-search "TAP" block4Name) nil)
 										(progn
-											(setq ks 1)
+											(setq ks (+ ks 1))
 											(setq lista_log1 (strcat lista_log1 " ### TAP "))
 										)
 									)
 									(if (/= (vl-string-search "DC" block4Name) nil)
 										(progn
 											(setq pin500 (+ pin500 1))
-											(setq ks 1)
+											(setq ks (+ ks 1))
 											(setq lista_log1 (strcat lista_log1 " ### DC "))
 										)
 									)
 									(if (/= (vl-string-search "2WAY" block4Name) nil)
 										(progn
 											(setq pin500 (+ pin500 1))
-											(setq ks 1)
+											(setq ks (+ ks 1))
 											(setq lista_log1 (strcat lista_log1 " ### 2WAY "))
 										)
 									)
 									(if (/= (vl-string-search "3WAY" block4Name) nil)
 										(progn
 											(setq pin500 (+ pin500 2))
-											(setq ks 1)
+											(setq ks (+ ks 1))
 											(setq lista_log1 (strcat lista_log1 " ### 3WAY "))
 										)
 									)
+									
+									
+									;lista_controle
+									
+									(setq tam3 (length lista_cabos))
+									(while (> tam3 0)
+										;(setq elm (nth (- tam3 1) lista_cabos))
+										(setq tam4 (length (nth (- tam3 1) lista_cabos)))
+										
+										(while (> tam4 0)
+											
+											(setq elm (nth (- tam4 1) (nth (- tam3 1) lista_cabos)))
+											(setq coord (nth 1 elm))
+											(setq x1 (rtos (car coord) 2 3))
+											(setq y1 (rtos (cadr coord) 2 3))
+											(setq chave (strcat x1 y1))
+											(setq pesquisa (assoc chave lista_controle))
+											(if (= pesquisa nil)
+												(progn
+													(setq oldlayer (getvar "CLAYER")) ; get current layer
+													(command "layer" "m" "samuel_ok" "c" "cyan" "" "")
+													(command "circle" coord 1.3)
+													(command "layer" "m" oldlayer "c" "yellow" "" "")
+													
+													(setq todos_cabos_mapa (cons elm todos_cabos_mapa))
+													(setq lista_controle (cons (list chave) lista_controle) )
+												)
+											)
+											
+											(setq tam4 (- tam4 1))
+										)
+										
+										
+										(setq tam3 (- tam3 1))
+										
+									)
+									
+									
 								)
 							)
-							
 							(setq qtd4 (- qtd4 1))
 						)
-						
-						;(command "layer" "m" "informacoes_encontradas" "c" "cyan" "" "")
-						;(command "text" coord  0 lista_log1)
-						
 					)
 				)
-				
-				
-				
 				(setq qtd (- qtd 1))
 			)
 		)
 	)
+	
+	;todos_cabos_mapa
+	;pin500
+	;ks
 )
 
 
@@ -380,7 +421,7 @@
 	(while (<= contagemAng 360)
 		(setq pnew (polar meio1 (/ (* pi contagemAng) 180) raio))
 		(command "zoom" "c" pnew 3)
-		(command "circle" pnew 0.08)
+		(command "circle" pnew 0.03)
 		
 		(setq objRede (verifica_se_rede_existe pnew))
 		(if objRede
@@ -437,15 +478,95 @@
 	)
 )
 
-(defun procura_redes_connect(obj / blockName anguloRotacao  insercao resposta)
+(defun verifica_se_exist_ampl(p / PONTO1 PONTO2 all)
+	(setq PONTO1 (polar p (/ pi 4) 0.1))
+	(setq PONTO2 (polar p (* (/ pi 4) 5) 0.1))
+	
+	(command "zoom" "w" PONTO1 PONTO2)
+	(setq all (ssget "C" PONTO1 PONTO2 (List (cons -4 "<AND") (cons 0 "INSERT")   (cons 2 "AMP3AC")  (cons -4 "AND>")  )))
+	
+	all
+)
+
+(defun procura_redes_connect(obj / blockName anguloRotacao  insercao resposta invertido)
 	(command "layer" "m" "linha_perimetro" "c" "yellow" "" "")
 	
 	(setq blockName (vl-string-trim " " (strcase (cdr (assoc 2 (entget obj))))))
+	;Se o resultado for 1, significa que o bloco não foi invertido
+	(setq invertido (cdr (assoc 41 (entget obj))))
+	
+	;Essa variável irá guardar todos os cabos conectados no objeto
+	;E será a variável de retorno
+	(setq lista_redes_conectadas nil)
+	
+	
+	(if (/= (vl-string-search "LPI" blockName) nil)
+		(progn
+			(command "zoom" "c" coord 10)
+			(setq anguloRotacao  (cdr (assoc 50 (entget obj))))
+			(setq insercao  (cdr (assoc 10 (entget obj))))
+			
+			(command "line" insercao (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) "")
+			(command "line" (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1) "")
+			(command "line" (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1) (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) "")
+			(command "line" (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (polar  (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (+ anguloRotacao pi) 1) "")
+			(command "line" (polar  (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (+ anguloRotacao pi) 1)  (polar (polar  (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (+ anguloRotacao pi) 1) (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001 ) "" )
+			
+			
+			(setq l1 (procura_por_rede_verde  (polar  (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (+ anguloRotacao pi) 1)  (polar (polar  (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (+ anguloRotacao pi) 1) (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001 )   ))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
+			
+			(setq l1 (procura_por_rede_verde (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (polar  (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1) (+ anguloRotacao pi) 1) ))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
+			
+			
+			(setq l1 (procura_por_rede_verde (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1) (polar (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1)   (+ anguloRotacao (samuel_radianos 90)) 1)))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
+			
+			
+			(setq l1 (procura_por_rede_verde  insercao (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001)   ))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
+			(setq l1 (procura_por_rede_verde (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) (polar (polar insercao (- anguloRotacao (samuel_radianos 90)) 0.5000000000000001) anguloRotacao 1) ))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
+			
+		)
+	)
 	
 	(if (or (= blockName "LE") (= blockName "AMP3") (= blockName "AMP3AC") )
 		(progn
 			(setq anguloRotacao  (cdr (assoc 50 (entget obj))))
 			(setq insercao  (cdr (assoc 10 (entget obj))))
+			(setq invertido  (cdr (assoc 41 (entget obj))))
 			
 			(setq pontoTriangulo (polar  insercao  anguloRotacao 6.062177826512224))
 			(setq resposta (verifica_ponto_tri pontoTriangulo obj))
@@ -456,6 +577,19 @@
 				)
 			)
 			
+			(command "line" insercao (polar insercao (- anguloRotacao pi ) 0.3323423291321701) "")
+			(setq l1 (procura_por_rede_verde 
+				insercao (polar insercao (- anguloRotacao pi ) 0.3323423291321701)
+			))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
+			
+			
 			(command "line" insercao (polar insercao (- anguloRotacao (/ pi 2) ) 3.500000000007229) "")
 			(command "line" (polar insercao (- anguloRotacao (/ pi 2) ) 3.500000000007229) pontoTriangulo "")
 			(command "line"  pontoTriangulo  (polar insercao  (+ anguloRotacao (/ pi 2) )   3.500000000007229 ) "" )
@@ -465,9 +599,16 @@
 			;Verifica as pontas do triângulo, e meios também
 			(if (=  blockName "AMP3")
 				(progn
+					
+					
 					(command "line" insercao  (polar insercao (+ anguloRotacao pi)  0.3323423290494243) "")
 					(setq l1 (procura_por_rede_verde insercao  (polar insercao (+ anguloRotacao pi)  0.3323423290494243)  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					(command "line" (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.3323423290494243 ) "" )
 					
@@ -475,33 +616,129 @@
 						(polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.3323423290494243 )
 					))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
+					
+					(command "line" (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.3738855367352605 ) "" )
+					(setq l1 (procura_por_rede_verde 
+						(polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.3738855367352605 )
+					))
+					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
+					
+					
+					
 				)
 			)
 			
 			
 			(if (=  blockName "AMP3AC")
 				(progn
-					(command "line" (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.6323743077355164 ) "" )
+					(if (= invertido 1)
+						(progn
+							(command "line" (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.6323743077355164 ) "" )
+							
+							(setq l1 (procura_por_rede_verde 
+								(polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.6323743077355164 )
+							))
+							(if (/= l1 nil)
+								(progn
+									(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+								)
+							)
+							
+							
+							
+							(setq meio1 (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ))
+							(setq l1 (procura_em_circulo meio1 0.6323743077355191)) ;Retorna a lista com
+							;todas as redes que estão conectadas nesse DC
+							(if (/= l1 nil)
+								(progn
+									(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+								)
+							)
+							(setq tam (length l1))
+							(while (> tam 0)
+								(command "circle" (nth 1 (nth (- tam 1) l1)) 0.08)
+								(setq tam (- tam 1))
+							)
+							
+						)
+						(progn
+							(command "line" (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.6323743077355164 ) "" )
+							
+							(setq l1 (procura_por_rede_verde 
+								(polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.6323743077355164 )
+							))
+							(if (/= l1 nil)
+								(progn
+									(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+								)
+							)
+							
+							
+							(setq meio1 (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ))
+							(setq l1 (procura_em_circulo meio1 0.6323743077355191)) ;Retorna a lista com
+							;todas as redes que estão conectadas nesse DC
+							(if (/= l1 nil)
+								(progn
+									(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+								)
+							)
+							(setq tam (length l1))
+							(while (> tam 0)
+								(command "circle" (nth 1 (nth (- tam 1) l1)) 0.08)
+								(setq tam (- tam 1))
+							)
+						)
+					)
 					
-					(setq l1 (procura_por_rede_verde 
-						(polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.6323743077355164 )
-					))
-					(marca_encontrado l1)
 				)
 			)
 			
 			
 			(if (or (=  blockName "AMP3") (=  blockName "AMP3AC"))
 				(progn
+					
 					(command "line" pontoTriangulo  (polar pontoTriangulo anguloRotacao  0.3323423290494243) "")
 					(setq l1 (procura_por_rede_verde pontoTriangulo  (polar pontoTriangulo anguloRotacao  0.3323423290494243)  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
-					;samuel_radianos
-					(command "line" (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.3323423290494243 ) "" )
 					
-					(setq l1 (procura_por_rede_verde (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.3323423290494243 )  ))
+					
+					
+					(if (= invertido 1)
+						(progn
+							(command "line" (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.3323423290494243 ) "" )
+							
+							(setq l1 (procura_por_rede_verde (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (- anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (- anguloRotacao (samuel_radianos 60) )  0.3323423290494243 )  ))
+						)
+						(progn
+							(command "line" (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.3323423290494243 ) "" )
+							
+							(setq l1 (procura_por_rede_verde (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 )  (polar (polar insercao  (+ anguloRotacao (samuel_radianos 29) ) 3.543135675291228 ) (+ anguloRotacao (samuel_radianos 60) )  0.3323423290494243 )  ))
+						)
+					)
+					
+					
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 				)
 			)
 			
@@ -510,11 +747,32 @@
 			
 			(setq l1 (procura_por_rede_verde insercao (polar insercao (- anguloRotacao (/ pi 2) ) 3.500000000007229)   ))
 			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
 			(setq l1 (procura_por_rede_verde (polar insercao (- anguloRotacao (/ pi 2) ) 3.500000000007229)  pontoTriangulo   ))
 			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
 			(setq l1 (procura_por_rede_verde   pontoTriangulo  (polar insercao  (+ anguloRotacao (/ pi 2) )   3.500000000007229 )   ))
 			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
 			(setq l1 (procura_por_rede_verde (polar insercao  (+ anguloRotacao (/ pi 2) )   3.500000000007229 ) insercao   ))
+			(marca_encontrado l1)
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
 			
 			
 		)
@@ -528,7 +786,11 @@
 			(setq meio1 (polar insercao anguloRotacao raio))
 			(setq l1 (procura_em_circulo meio1 raio)) ;Retorna a lista com
 			;todas as redes que estão conectadas nesse DC
-			
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
 			(setq tam (length l1))
 			(while (> tam 0)
 				(command "circle" (nth 1 (nth (- tam 1) l1)) 0.3)
@@ -553,33 +815,63 @@
 					(command "line" insercao (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) "")
 					(setq l1 (procura_por_rede_verde  insercao (polar insercao  (- anguloRotacao (/ pi 3))  aresta1)   ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					(command "line" (polar insercao  (- anguloRotacao (/ pi 3))  aresta1)   (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) "")
 					(setq l1 (procura_por_rede_verde (polar insercao  (- anguloRotacao (/ pi 3))  aresta1)   (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1)   ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					(command "line" (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) "")
 					(setq l1 (procura_por_rede_verde (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1)   ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					(command "line"  (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 )  "")
 					(setq l1 (procura_por_rede_verde  (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 )  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					
 					(command "line"  (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 )  (polar (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 ) (+ anguloRotacao pi) aresta1) "")
 					(setq l1 (procura_por_rede_verde  (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 )  (polar (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 ) (+ anguloRotacao pi) aresta1) ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					
 					(command "line" (polar (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 ) (+ anguloRotacao pi) aresta1)   (polar  (polar (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 ) (+ anguloRotacao pi) aresta1)   (- anguloRotacao (* (/ pi 3) 2)) aresta1)  "")
 					(setq l1 (procura_por_rede_verde  (polar (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 ) (+ anguloRotacao pi) aresta1)   (polar  (polar (polar (polar (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) (+ anguloRotacao (/ pi 3)) aresta1) (+ anguloRotacao (* (/ pi 3) 2)  ) aresta1 ) (+ anguloRotacao pi) aresta1)   (- anguloRotacao (* (/ pi 3) 2)) aresta1)  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 				)
@@ -595,10 +887,16 @@
 					(setq meio1 (polar insercao anguloRotacao raio))
 					(setq l1 (procura_em_circulo meio1 raio)) ;Retorna a lista com
 					;todas as redes que estão conectadas nesse DC
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					(setq tam (length l1))
 					(while (> tam 0)
 						(command "circle" (nth 1 (nth (- tam 1) l1)) 0.3)
+						
 						(setq tam (- tam 1))
 					)
 				)
@@ -613,27 +911,56 @@
 					(command "line"  insercao  (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 )  "")
 					(setq l1 (procura_por_rede_verde insercao  (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 )  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					(command "line"   (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 )  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 )   "")
 					(setq l1 (procura_por_rede_verde  (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 )  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 )  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
+					
 					
 					
 					(command "line"  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 )
 						(polar  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 ) (+ anguloRotacao (/ pi 2)) 3.375000000021834 )   "")
 					(setq l1 (procura_por_rede_verde   (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 )   (polar  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 ) (+ anguloRotacao (/ pi 2)) 3.375000000021834 ) ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
+					
 					
 					
 					(command "line"   (polar  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 ) (+ anguloRotacao (/ pi 2)) 3.375000000021834 )  (polar insercao  (+ anguloRotacao (/ pi 2)   )  1.687500000010917 )  "" )
 					(setq l1 (procura_por_rede_verde  (polar  (polar (polar insercao (- anguloRotacao (/ pi 2)  ) 1.687500000010917 ) anguloRotacao  3.375000000021834 ) (+ anguloRotacao (/ pi 2)) 3.375000000021834 )  (polar insercao  (+ anguloRotacao (/ pi 2)   )  1.687500000010917 )  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
 					
 					
 					(command "line" (polar insercao  (+ anguloRotacao (/ pi 2)   )  1.687500000010917 )  insercao  "")
 					(setq l1 (procura_por_rede_verde  (polar insercao  (+ anguloRotacao (/ pi 2)   )  1.687500000010917 )  insercao  ))
 					(marca_encontrado l1)
+					(if (/= l1 nil)
+						(progn
+							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+						)
+					)
+					
+					
 				)
 			)
 			
@@ -649,6 +976,11 @@
 			(setq meio1 (polar insercao anguloRotacao raio))
 			(setq l1 (procura_em_circulo meio1 raio)) ;Retorna a lista com
 			;todas as redes que estão conectadas nesse DC
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
 			
 			(setq tam (length l1))
 			(while (> tam 0)
@@ -667,6 +999,12 @@
 			(setq meio1 (polar insercao anguloRotacao raio))
 			(setq l1 (procura_em_circulo meio1 raio)) ;Retorna a lista com
 			;todas as redes que estão conectadas nesse DC
+			(if (/= l1 nil)
+				(progn
+					(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
+				)
+			)
+			
 			
 			(setq tam (length l1))
 			(while (> tam 0)
@@ -676,29 +1014,21 @@
 		)
 	)
 	
+
 	
-	
-	
+	lista_redes_conectadas
 )
 
 (defun ajusta_layers_arcitech1()
 	(command "layer" "off" "*" "" "")
-	
 	(command "layer" "ON" "NET_UPGRADE" "" "")
 	(command "layer" "ON" "NET-TAP" "" "")
 	(command "layer" "ON" "NET-SPLT" "" "")
-	;(command "layer" "ON" "ELETRONICO" "" "")
 	(command "layer" "ON" "QUADRA" "" "")
 	(command "layer" "ON" "QUADRAS" "" "")
-	;(command "layer" "ON" "HC" "" "")
-	;(command "layer" "ON" "TERRA" "" "")
-	;(command "layer" "ON" "RUA" "" "")
-	;(command "layer" "ON" "LIMITE" "" "")
-	;(command "layer" "ON" "pular1" "" "")
 	(command "layer" "ON" "NET-AMP" "" "")
 	(command "layer" "ON" "NET-CBTR" "" "")
 	(command "layer" "ON" "NET-CBTP" "" "")
-	
 )
 
 (defun c:amplificadores_conectores_ks()
@@ -706,25 +1036,12 @@
 	(command "_osnap" "none")
 	(vl-load-com)
 	
-	
 	(setq resp1 (strcase (getstring "\nAjustar layers? [s/n]")))
 	(if (= resp1 "S")
 		(progn
 			(ajusta_layers_arcitech1)
 		)
 	)
-	
-	
-	;(setq all (ssget))
-	;(setq qtd (- (sslength all) 1))
-	;(while (>= qtd 0)
-	;	(setq obj (ssname all qtd))
-	;	
-	;	(procura_redes_connect obj)
-	;	(setq qtd (- qtd 1))
-	;)
-	;(exit)
-	
 	
 	(setq logerro 0)
 	(setq resp (strcase (getstring "\nVerificar erros? [s/n]") ))
@@ -747,8 +1064,6 @@
 	)
 	
 	(percorre_elemetnos2)
-	
-	
 	
 	(princ)
 )
