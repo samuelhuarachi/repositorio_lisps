@@ -413,6 +413,7 @@
 						
 						(setq objPolyline nil)
 						(setq objInformacoes (procura_atualizacoes coord1 coord2))
+						
 						(if (= objInformacoes nil) 
 							(progn
 								

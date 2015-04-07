@@ -22,11 +22,8 @@
 )
 
 
-
-
 (defun c:lll()
 	(load pathLisp)
-	
 	(princ (strcat "O arquivo '" pathLisp "', foi carregado. Para iniciar digite '" nomeComando "'"))
 	(princ)
 )
@@ -61,13 +58,15 @@
 		(princ "\n[11] - BATCHLISP")
 		(princ "\n[12] - Verifica erro de digitação")
 		(princ "\n[13] - Amplificadores / Conectores / Ks. Contagem")
+		(princ "\n[14] - Corrige tap acoplador")
+		(princ "\n[15] - Alert cabos 500, e 750")
 		
 		
 		(princ "\n[s] - Sair")
 		(princ "\nDigite a opção: ")
 		
 		(setq opcao (getstring))
-		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "S")))
+		(setq valid_option (verifica_opcoes_escolha_string opcao (list "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "S")))
 		(if (= valid_option nil )
 			(progn
 				(princ "\n### Opção inválida! ###")
@@ -169,6 +168,23 @@
 								(c:amplificadores_conectores_ks)
 							)
 						)
+						
+						(if (= (strcase opcao) "14" )
+							(progn
+								(load (strcat basePath "lisps\\corrige_tap_acoplador.lsp"))
+								(c:corrige_tap_acoplador)
+							)
+						)
+						
+						(if (= (strcase opcao) "15" )
+							(progn
+								(load (strcat basePath "lisps\\somar_cabos.lsp"))
+								(c:somar_cabos)
+							)
+						)
+						
+						
+						
 					)
 					(progn
 						(princ "\nSaindo da aplicação...")

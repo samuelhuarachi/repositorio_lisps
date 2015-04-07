@@ -505,7 +505,7 @@
 	(setq angulo (angle c1 c2))
 	(setq procura nil)
 	(setq distanciaRun 0)
-	(while (= procura nil)
+	(while (and  (= procura nil) (< distanciaRun 1.1) )
 		(setq procura (faz_janela (polar c2 angulo distanciaRun) 2 "CX_CODUPGRADE,CX_CodUpgrade,CX_CodUpgradeCabo" 0.3))
 		(setq distanciaRun (+ distanciaRun 0.01))
 		
@@ -514,7 +514,11 @@
 				(setq procura (ssname procura 0))
 			)
 		)
+		;(princ (strcat "\n" (rtos distanciaRun 2 2)))
+		
+		
 	)
+	
 	
 	procura
 )

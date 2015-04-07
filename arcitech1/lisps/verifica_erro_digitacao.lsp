@@ -27,9 +27,20 @@
 				
 				(while (/= (retorna_attrib obj contador2) nil)
 					
+					
+					(if (= (retorna_attrib obj contador2) "PIN-F/600")
+						(progn
+							(command "layer" "m" "erro_digitacao" "c" "red" "" "")
+							(command "circle" coord 7)
+							(command "circle" coord 8)
+						)
+					)
+					
+					
+					
 					;equipamentos
 					(if (or (= contador2 2) (= contador2 5)  (= contador2 8) (= contador2 11) (= contador2 14) 
-					(= contador2 17) (= contador2 20) (= contador2 23)  (= contador2 26)   )
+					        (= contador2 17) (= contador2 20) (= contador2 23) (= contador2 26)   )
 						(progn
 							
 							(if (and
@@ -50,11 +61,38 @@
 						)
 					)
 					
-					;instalados
-					(if (or (= contador2 4) (= contador2 7) (= contador2 10)  (= contador2 13)  (= contador2 16)
-					(= contador2 19)  (= contador2 22)  (= contador2 25)  (= contador2 28)  )
+					;antigos
+					(if (or (= contador2 3) (= contador2 6) (= contador2 9)  (= contador2 12)  (= contador2 15)
+					        (= contador2 18)  (= contador2 21)  (= contador2 24)  (= contador2 27)  )
 						(progn
 							(if (and
+									(= (retorna_attrib obj (- contador2 1)) "AMPLIFICADOR")
+									(= (vl-string-search "/600" (strcase (retorna_attrib obj contador2))) nil) ;600 marcar erro, ou /1
+								)
+								(progn
+									(command "layer" "m" "erro_digitacao" "c" "red" "" "")
+									(command "circle" coord 7)
+									(command "circle" coord 8)
+								)
+							)
+							(if (and
+									(or  (= (retorna_attrib obj (- contador2 1)) "ACOPLADOR")  (= (retorna_attrib obj (- contador2 1)) "TAP") )
+									(= (vl-string-search "/1" (strcase (retorna_attrib obj contador2))) nil) ;600 marcar erro, ou /1
+								)
+								(progn
+									(command "layer" "m" "erro_digitacao" "c" "red" "" "")
+									(command "circle" coord 7)
+									(command "circle" coord 8)
+								)
+							)
+						)
+					)
+					
+					;instalados
+					(if  (or (= contador2 4) (= contador2 7) (= contador2 10)  (= contador2 13)  (= contador2 16)
+							 (= contador2 19)  (= contador2 22)  (= contador2 25)  (= contador2 28)  )
+						(progn
+							(if (and  
 									(/= (vl-string-search "600" (strcase (retorna_attrib obj contador2))) nil) ;600 marcar erro, ou /1
 								)
 								(progn

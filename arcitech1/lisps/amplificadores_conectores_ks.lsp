@@ -249,13 +249,8 @@
 											
 											(setq tam4 (- tam4 1))
 										)
-										
-										
 										(setq tam3 (- tam3 1))
-										
 									)
-									
-									
 								)
 							)
 							(setq qtd4 (- qtd4 1))
@@ -266,7 +261,6 @@
 			)
 		)
 	)
-	
 	;todos_cabos_mapa
 	;pin500
 	;ks
@@ -274,7 +268,6 @@
 
 
 (defun verifica_se_rede_existe(pnovo / PONTO1 PONTO2 JANELA)
-	
 	(command "zoom" "c" pnovo 1)
 	(setq PONTO1 (polar pnovo (/ pi 4) 0.2))
 	(setq PONTO2 (polar pnovo (* (/ pi 4) 5) 0.2))
@@ -375,11 +368,9 @@
 			
 			)
 		)
-		
 		(setq fatorx (+ fatorx 1))
 		(setq distancia_atual (distance p1 pnovo))
 	)
-	
 	listaRedesConectadas
 )
 
@@ -387,13 +378,11 @@
 	(setq PONTO1 (polar pontoTriangulo (/ pi 4) 0.08))
 	(setq PONTO2 (polar pontoTriangulo (* (/ pi 4) 5) 0.08))
 	(setq blockName  (cdr (assoc 2 (entget obj))))
-	
 	(command "zoom" "w" PONTO1 PONTO2)
 	(setq all (ssget "C" PONTO1 PONTO2 (List (cons -4 "<AND") (cons 0 "INSERT")   (cons 2 blockName)  (cons -4 "AND>")  )))
 	(setq achou 0)
 	(setq lista_ver nil)
 	(setq lista_ver (cons (list obj) lista_ver))
-	
 	(if (/= all nil)
 		(progn
 			(setq qtd (- (sslength all) 1))
@@ -404,7 +393,6 @@
 						(setq achou 1)
 					)
 				)
-				
 				(setq qtd (- qtd 1))
 			)
 		)
@@ -426,7 +414,6 @@
 		(setq objRede (verifica_se_rede_existe pnew))
 		(if objRede
 			(progn
-			
 				(setq qtd (- (sslength objRede) 1))
 				(while (>= qtd 0)
 					(setq obj (ssname objRede qtd))
@@ -452,7 +439,6 @@
 											(setq pontoExt2 (nth 1 pontoext))
 										)
 									)
-									
 									(setq listaRedesConectadas (cons (list obj pontoExt2) listaRedesConectadas))
 								)
 							)
@@ -462,8 +448,6 @@
 				)
 			)
 		)
-		
-		
 		(setq contagemAng (+ contagemAng 1))
 	)
 	listaRedesConectadas
@@ -810,7 +794,6 @@
 			;Estilo hexágono
 			(if (/= (vl-string-search "TAP8" blockName) nil)
 				(progn
-				
 					(setq aresta1 1.837602605538331)
 					(command "line" insercao (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) "")
 					(setq l1 (procura_por_rede_verde  insercao (polar insercao  (- anguloRotacao (/ pi 3))  aresta1)   ))
@@ -820,7 +803,6 @@
 							(setq lista_redes_conectadas (cons l1  lista_redes_conectadas))
 						)
 					)
-					
 					
 					(command "line" (polar insercao  (- anguloRotacao (/ pi 3))  aresta1)   (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1) "")
 					(setq l1 (procura_por_rede_verde (polar insercao  (- anguloRotacao (/ pi 3))  aresta1)   (polar (polar insercao  (- anguloRotacao (/ pi 3))  aresta1) anguloRotacao aresta1)   ))
@@ -1031,6 +1013,35 @@
 	(command "layer" "ON" "NET-CBTP" "" "")
 )
 
+
+(defun procura_cabo_roxo( )
+	;todos_cabos_mapa
+	;pin500
+	;ks
+	(setq tam1 (length todos_cabos_mapa))
+	(setq qtdCBTP 0)
+	(while (> tam1 0)
+		
+		(setq rede1_info (nth (- tam1 1) todos_cabos_mapa))
+		(setq rede1 (nth 0 rede1_info))
+		(setq coordenada (nth 1 rede1_info))
+		(setq layerName (strcase (cdr (assoc 8 (entget rede1)))))
+		;NET-CBTP
+		(if (= layerName "NET-CBTP")
+			(progn
+				(setq qtdCBTP (+ qtdCBTP 1))
+			)
+		)
+		
+		(setq tam1 (- tam1 1))
+	)
+)
+
+(defun limpar_layers_mapa()
+	(setq all (ssget "X" '((8 . "samuel_ok,linha_perimetro,amplificador_erro,amplificador_conferido,layer_temporaria1"))))
+	(command "erase" all "")
+)
+
 (defun c:amplificadores_conectores_ks()
 	(setvar "cmdecho" 0)
 	(command "_osnap" "none")
@@ -1053,7 +1064,7 @@
 	
 	(if (= logerro 1)
 		(progn
-			(alert "Foram encontrados erros no mapas \nAmplificadores fora do limite \nOs pontos com erros estão marcados na layer 'amplificador_erro'")
+			(alert "Foram encontrados erros no mapas \nAmplificadores fora do limite \nOs pontos com erro estão marcados na layer 'amplificador_erro'")
 			(setq resp (strcase (getstring "\nContinuar mesmo assim? [s/n]") ))
 			(if (= resp "N")
 				(progn
@@ -1064,6 +1075,22 @@
 	)
 	
 	(percorre_elemetnos2)
+	
+	(procura_cabo_roxo)
+	
+	;todos_cabos_mapa
+	;pin500
+	;ks
+	;qtdCBTP
+	
+	(limpar_layers_mapa)
+	
+	(alert (strcat "\nQuantidade PIN750 - " (itoa qtdCBTP) 
+	"\n--------------------------"
+	"\nQuantidade PIN500 - " (itoa (- pin500 qtdCBTP))
+	"\n--------------------------"
+	"\nQuantidade KS - " (itoa ks)
+	))
 	
 	(princ)
 )

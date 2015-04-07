@@ -80,6 +80,58 @@
 					(setq lista_relatorio (cons (list valorNovo 1 ) lista_relatorio))
 				)
 			)
+			
+			;#########
+			(if (= vvv "ACOPLADOR")
+				(progn
+					(setq valorNovo (vl-string-trim " " (strcase (retorna_attrib objV   posicaoAtrr )  )) )
+					
+					(setq listaValorNovo(sparser valorNovo "/"))
+					(if (> (length listaValorNovo) 1)
+						(progn
+							(setq valorNovo (nth 0 listaValorNovo))
+							(setq procura1 (assoc valorNovo lista_relatorio_dc))
+							(if (/= procura1 nil)
+								(progn
+									(setq comprimentoE  (nth 1 procura1))
+									(setq lista_relatorio_dc (subst (list valorNovo (+ comprimentoE 1))(assoc valorNovo 
+									lista_relatorio_dc) lista_relatorio_dc))
+								)
+								(progn
+									(setq lista_relatorio_dc (cons (list valorNovo 1 ) lista_relatorio_dc))
+								)
+							)
+						)
+					)
+					
+				)
+			)
+			
+			(if (= vvv "TAP")
+				(progn
+					(setq valorNovo (vl-string-trim " " (strcase (retorna_attrib objV   posicaoAtrr )  )) )
+					(setq valorNovo (sparser valorNovo "/") )
+					
+					(if (> (length valorNovo) 1)
+						(progn
+							(setq valorNovo (strcat (nth 0 valorNovo) "/"  (nth 1 valorNovo) ))
+							(setq procura1 (assoc valorNovo lista_relatorio2))
+							
+							(if (/= procura1 nil)
+								(progn
+									(setq comprimentoE  (nth 1 procura1))
+									(setq lista_relatorio2 (subst (list valorNovo (+ comprimentoE 1))(assoc valorNovo lista_relatorio2) lista_relatorio2))
+									
+								)
+								(progn
+									(setq lista_relatorio2 (cons (list valorNovo 1 ) lista_relatorio2))
+								)
+							)
+						)
+					)
+				)
+			)
+			
 		)
 	)
 	
@@ -91,6 +143,8 @@
 	
 	(verifica_duplicidade "NET_UPGRADE" "INSERT")
 	(setq lista_relatorio nil)
+	(setq lista_relatorio2 nil)
+	(setq lista_relatorio_dc nil)
 	(setq all (ssget "x" '((-4 . "<AND") (2 . "CX_CodUpgrade")(0 . "INSERT")(-4 . "AND>"))))
 	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
 	(if (/= all nil)
@@ -143,13 +197,11 @@
 		(setq contador (+ contador 1))
 		(setq elemento (nth contador lista_relatorio))
 	)
-	
-	
 )
 
 
 (defun abre_arq()
-	(setq  ARQUIVO_CSV (open (getfiled (strcat "Escolha a Pasta") "" "csv" 1) "w"))
+	(setq  ARQUIVO_CSV (open (getfiled (strcat "Escolha a Pasta")   (strcat (vl-string-subst  "" ".DWG" (vl-string-subst  "" ".dwg" (strcat "BOM_"(getvar "DWGNAME")))) ".csv")   "csv" 1) "w"))
 )
 
 (defun fecha()
@@ -259,12 +311,28 @@
 		(setq resp1 (verifica_se_tap elem))
 		(if resp1
 			(progn
-				
 				(setq valor2Sparser (sparser (nth 0 elem) "/"))
 				
 				(if (and   (= achouFlag 0) (= (nth 0 valor2Sparser) valor1)   (= (nth 1 valor2Sparser) valor2)  )
 					(progn
-						(write-line (strcat "Taps - " valor1 " Vias;SAT" valor1 "G-" valor2 ";" (itoa (nth 1 elem))) ARQUIVO_CSV)
+						
+						;Procura diferença...
+						(setq rr (assoc (strcat (nth 0 valor2Sparser) "/" (nth 1 valor2Sparser)) lista_relatorio2))
+						(if (/= rr nil)
+							(progn
+								(setq resultado (- (nth 1 elem) (nth 1 rr)) )
+								(if (< resultado 0)
+									(progn
+										(setq resultado 0)
+									)
+								)
+							)
+							(progn
+								(setq resultado (nth 1 elem))
+							)
+						)
+						
+						(write-line (strcat "Taps - " valor1 " Vias;SAT" valor1 "G-" valor2 ";" (itoa resultado )) ARQUIVO_CSV)
 						(setq achouFlag 1)
 					)
 				)
@@ -287,13 +355,18 @@
 	(write-line "sep=;" ARQUIVO_CSV)
 	(write-line "Equipamentos;Part Number;Qtde" ARQUIVO_CSV)
 	(write-line (strcat "Amplificadores;GNMKR LE THERM;" (itoa GNMKR_LE_THERM)) ARQUIVO_CSV)
-	(write-line (strcat "Amplificadores;GNMKR LE THERM - HOUSING;" (itoa GNMKR_LE_THERM_HOUSING)) ARQUIVO_CSV)
+	(write-line (strcat "Amplificadores;GNMKR LE THERM - HOUSING;" (itoa GNMKR_LE_THERM)) ARQUIVO_CSV)
+	;(write-line (strcat "Amplificadores;GNMKR LE THERM - HOUSING;" (itoa GNMKR_LE_THERM_HOUSING)) ARQUIVO_CSV)
 	(write-line (strcat "Amplificadores;GM-HGD-1GHz;" (itoa GM_HGD_1GHz)) ARQUIVO_CSV)
-	(write-line (strcat "Amplificadores;GM-HGD-1GHz - HOUSING;" (itoa GM_HGD_1GHz_HOUSING)) ARQUIVO_CSV)
+	(write-line (strcat "Amplificadores;GM-HGD-1GHz - HOUSING;" (itoa GM_HGD_1GHz)) ARQUIVO_CSV)
+	;(write-line (strcat "Amplificadores;GM-HGD-1GHz - HOUSING;" (itoa GM_HGD_1GHz_HOUSING)) ARQUIVO_CSV)
 	(write-line (strcat "Amplificadores;GM-HGBT-1GHz;" (itoa GM_HGBT_1GHz)) ARQUIVO_CSV)
-	(write-line (strcat "Amplificadores;GM-HGBT-1GHz - HOUSING;" (itoa GM_HGBT_1GHz_HOUSING)) ARQUIVO_CSV)
-	(write-line (strcat "Amplificadores;GS7000;" (itoa GS7000)) ARQUIVO_CSV)
-	(write-line (strcat "Amplificadores;SG4000;" (itoa SG4000)) ARQUIVO_CSV)
+	(write-line (strcat "Amplificadores;GM-HGBT-1GHz - HOUSING;" (itoa GM_HGBT_1GHz)) ARQUIVO_CSV)
+	;(write-line (strcat "Amplificadores;GM-HGBT-1GHz - HOUSING;" (itoa GM_HGBT_1GHz_HOUSING)) ARQUIVO_CSV)
+	(write-line (strcat "Amplificadores;GS7000;0") ARQUIVO_CSV)
+	;(write-line (strcat "Amplificadores;GS7000;" (itoa GS7000)) ARQUIVO_CSV)
+	(write-line (strcat "Amplificadores;SG4000;0" ) ARQUIVO_CSV)
+	;(write-line (strcat "Amplificadores;SG4000;" (itoa SG4000)) ARQUIVO_CSV)
 	
 	(setq contador01 0)
 	(while (<= contador01 20)
@@ -390,7 +463,24 @@
 	(setq procura2 (assoc find1 lista_relatorio) )
 	(if (/= procura2 nil)
 		(progn
-			(write-line (strcat "Couplers Externos;SAS2G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
+			
+			(setq procura (assoc "2WAY" lista_relatorio_dc))
+			(if (/= procura nil)
+				(progn
+					(setq qtdAntigo (nth 1 procura))
+					(setq qtdNovo (nth 1 procura2))
+					(setq dif1 (- qtdNovo qtdAntigo))
+					(if (< dif1 0)
+						(progn
+							(setq dif1 0)
+						)
+					)
+				)
+				(progn
+					(setq dif1 (nth 1 procura2))
+				)
+			)
+			(write-line (strcat "Couplers Externos;SAS2G;" (itoa dif1) ) ARQUIVO_CSV)
 		)
 		(progn
 			(write-line (strcat "Couplers Externos;SAS2G;0"  ) ARQUIVO_CSV)
@@ -401,7 +491,25 @@
 	(setq procura2 (assoc find1 lista_relatorio) )
 	(if (/= procura2 nil)
 		(progn
-			(write-line (strcat "Couplers Externos;SAS3UG;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
+			
+			(setq procura (assoc "3WAY" lista_relatorio_dc))
+			(if (/= procura nil)
+				(progn
+					(setq qtdAntigo (nth 1 procura))
+					(setq qtdNovo (nth 1 procura2))
+					(setq dif1 (- qtdNovo qtdAntigo))
+					(if (< dif1 0)
+						(progn
+							(setq dif1 0)
+						)
+					)
+				)
+				(progn
+					(setq dif1 (nth 1 procura2))
+				)
+			)
+			
+			(write-line (strcat "Couplers Externos;SAS3UG;" (itoa dif1) ) ARQUIVO_CSV)
 		)
 		(progn
 			(write-line (strcat "Couplers Externos;SAS3UG;0"  ) ARQUIVO_CSV)
@@ -412,7 +520,25 @@
 	(setq procura2 (assoc find1 lista_relatorio) )
 	(if (/= procura2 nil)
 		(progn
-			(write-line (strcat "Couplers Externos;SADC8G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
+		
+			(setq procura (assoc "DC8" lista_relatorio_dc))
+			(if (/= procura nil)
+				(progn
+					(setq qtdAntigo (nth 1 procura))
+					(setq qtdNovo (nth 1 procura2))
+					(setq dif1 (- qtdNovo qtdAntigo))
+					(if (< dif1 0)
+						(progn
+							(setq dif1 0)
+						)
+					)
+				)
+				(progn
+					(setq dif1 (nth 1 procura2))
+				)
+			)
+			
+			(write-line (strcat "Couplers Externos;SADC8G;" (itoa dif1) ) ARQUIVO_CSV)
 		)
 		(progn
 			(write-line (strcat "Couplers Externos;SADC8G;0") ARQUIVO_CSV)
@@ -424,7 +550,26 @@
 	(setq procura2 (assoc find1 lista_relatorio) )
 	(if (/= procura2 nil)
 		(progn
-			(write-line (strcat "Couplers Externos;SADC12G;" (itoa (nth 1 procura2)) ) ARQUIVO_CSV)
+			
+			(setq procura (assoc "DC12" lista_relatorio_dc))
+			(if (/= procura nil)
+				(progn
+					(setq qtdAntigo (nth 1 procura))
+					(setq qtdNovo (nth 1 procura2))
+					(setq dif1 (- qtdNovo qtdAntigo))
+					(if (< dif1 0)
+						(progn
+							(setq dif1 0)
+						)
+					)
+				)
+				(progn
+					(setq dif1 (nth 1 procura2))
+				)
+			)
+			
+			
+			(write-line (strcat "Couplers Externos;SADC12G;" (itoa dif1) ) ARQUIVO_CSV)
 		)
 		(progn
 			(write-line (strcat "Couplers Externos;SADC12G;0" ) ARQUIVO_CSV)
@@ -437,8 +582,8 @@
 	
 	
 	(write-line "Fontes;LPI;0" ARQUIVO_CSV)
-
 	(write-line "Fontes;90V - 15A;0" ARQUIVO_CSV)
+	(write-line "Fontes;Bloqueador AC;0" ARQUIVO_CSV)
 	
 	(setq find1 "EQ/1")
 	(setq procura2 (assoc find1 lista_relatorio) )
@@ -461,6 +606,10 @@
 			(write-line (strcat "Cabos;.500;0"  ) ARQUIVO_CSV)
 		)
 	)
+	
+	
+	
+	
 	(setq find1 "LANCAR750")
 	(setq procura2 (assoc find1 lista_soma_cabos) )
 	(if (/= procura2 nil)
@@ -473,15 +622,57 @@
 	)
 	
 	;CABOS
-	(write-line (strcat "Conectores;PIN-500;" (itoa (* qtdLancar500 2) )  ) ARQUIVO_CSV)
-	(write-line (strcat "Conectores;PIN-750;" (itoa (* qtdLancar750 2) )  ) ARQUIVO_CSV)
-	(write-line "HP;HP;0" ARQUIVO_CSV)
-	(write-line "KM (STRAND);KM (STRAND);0" ARQUIVO_CSV)
+	(if (= pin500 nil)
+		(progn
+			(setq pin500 0)
+		)
+	)
+	(if (= qtdCBTP nil)
+		(progn
+			(setq qtdCBTP 0)
+		)
+	)
+	(setq totalPin500 (+ (* qtdLancar500 2) pin500))
+	(setq dezporcento (* totalPin500 0.1))
+	(setq totalmaisdez (+ totalPin500 dezporcento) )
+	(setq val1 (atof (rtos totalmaisdez 2 0)))
+	(if (> totalmaisdez val1)
+		(progn
+			(setq val1 (+ val1 1))
+		)
+	)
+	(setq totalPin (+ (* qtdLancar750 2) qtdCBTP))
+	(setq dezporcento (* totalPin 0.1))
+	(setq totalmaisdez (+ totalPin dezporcento) )
+	(setq val2 (atof (rtos totalmaisdez 2 0)))
+	(if (> totalmaisdez val2)
+		(progn
+			(setq val2 (+ val2 1))
+		)
+	)
+	
+	(setq dezporcento (* ks 0.1))
+	(setq totalmaisdez (+ ks dezporcento) )
+	(setq val3 (atof (rtos totalmaisdez 2 0)))
+	(if (> totalmaisdez val3)
+		(progn
+			(setq val3 (+ val3 1))
+		)
+	)
+	
+	(write-line (strcat "Conectores;PIN-500;" (rtos  val1 2 0)  )   ARQUIVO_CSV)
+	(write-line (strcat "Conectores;PIN-750;" (rtos  val2 2 0)  )   ARQUIVO_CSV)
+	(write-line (strcat "Conectores;Ks-Ks;" (rtos  val3 2 0)  )   ARQUIVO_CSV)
+	(write-line (strcat "HP;HP;" hp1) ARQUIVO_CSV)
+	(write-line (strcat "KM (STRAND);KM (STRAND);" km1) ARQUIVO_CSV)
 	
 	;lista_soma_cabos
 	(fecha)
 )
 
+
+
+		   
 
 (load "C:\\arcitech1\\lisps_aux\\funcoes.lsp")
 
@@ -805,7 +996,6 @@
 												(setq lista_rpad (cons (list ress 1) lista_rpad))
 											)
 											(progn
-												
 												(setq lista_rpad (subst (list ress (+ (nth 1 ppp) 1) ) (assoc ress lista_rpad) lista_rpad))
 											)
 										)
@@ -815,19 +1005,60 @@
 						)
 					)
 				)
-				
-				
-				
-				
-				
 			)
 		)
-		
-		
 		(setq LINHA_CSV (read-line ARQUIVO_CSV))
 		(setq LISTA_LINHA nil)
    )
    (close ARQUIVO_CSV)
+)
+
+(defun busca_hp_km()
+	
+	;(setq all (ssget "X" '((8 . "LAYER"))))
+	(setq all (ssget "x" (List (cons 8 "INFONODE"))))
+	;(setq all (ssget "x" '((-4 . "<AND") (8 . "ESPECIAL")(0 . "TEXT")(-4 . "AND>"))))
+	;(setq all (ssget "x" (List (cons -4 "<AND") (cons 0 typeBlock)   (cons 8 layerName)  (cons -4 "AND>")  )))
+	(setq hp1 "0")
+	(setq km1 "0")
+	(if (/= all nil)
+		(progn
+			(setq qtd (- (sslength all) 1))
+			(while (>= qtd 0)
+				(setq obj (ssname all qtd))
+				(setq texto1 (strcase (cdr (assoc 1 (entget obj)))))
+				(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
+				(setq coord (cdr (assoc 10 (entget obj))))
+				(setq x1 (rtos (car coord) 2 3))
+				(setq y1 (rtos (cadr coord) 2 3))
+				
+				(setq texto1  (vl-string-subst  ";" "\\P" (vl-string-subst  ";" "\\P" texto1)))
+				(setq texto1-lista (sparser texto1 ";"))
+				(setq tam1 (length texto1-lista))
+				
+				(while (> tam1 0)
+					(setq el1 (nth (- tam1 1) texto1-lista ))
+					(if (/= (vl-string-search "KM" (strcase el1)) nil)
+						(progn
+							(setq km1 (nth (- tam1 1) texto1-lista ))
+						)
+					)
+					(if (/= (vl-string-search "HP" (strcase el1)) nil)
+						(progn
+							(setq hp1  (nth (- tam1 1) texto1-lista ) )
+						)
+					)
+					
+					(setq tam1 (- tam1 1))
+				)
+				
+				
+				
+				(setq qtd (- qtd 1))
+			)
+		)
+	)
+	
 )
 
 (defun c:rtt()
@@ -835,11 +1066,26 @@
 	(command "_osnap" "none")
 	(vl-load-com)
 	(setq ARQUIVO_CSV2 nil)
-	(carrega_planilha_amplificadores)
 	
+	(setq resp2 (strcase (getstring "\nContar conectores? [s/n]")))
+	(if (= resp2 "S")
+		(progn
+			(load "C:\\arcitech1\\lisps\\amplificadores_conectores_ks.lsp")
+			(c:amplificadores_conectores_ks)
+		)
+	)
+	
+	(carrega_planilha_amplificadores)
 	(lendo_informacoes)
+	
+	;lista_relatorio
+	;lista_relatorio2
+	;lista_relatorio_dc
+	
 	(soma_cabos)
 	(exibe_relatorio)
+	
+	(busca_hp_km)
 	(salvar_arquivo)
 	
 	(princ)
