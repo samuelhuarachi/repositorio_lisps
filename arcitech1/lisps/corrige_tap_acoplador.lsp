@@ -19,6 +19,7 @@
 		(progn
 			(setq qtd (- (sslength all) 1))
 			(while (>= qtd 0)
+				(princ "\rAguarde...")
 				(setq obj (ssname all qtd))
 				(setq layerName (strcase (cdr (assoc 8 (entget obj)))))
 				(setq coord (cdr (assoc 10 (entget obj))))
@@ -29,73 +30,135 @@
 				(setq contador1 1)
 				(while (/= (retorna_attrib obj contador1) nil)
 					(setq valor1 (retorna_attrib obj contador1))
-					(if (/= valor1 nil)
+					
+					;(if (or (= valor1 "ACOPLADOR") (= valor1 "TAP") )
+					;	(progn
+					;		(setq valor2 (retorna_attrib obj (+ contador1 1)))
+					;		(if (/= valor2 "PIN-F/600")
+					;			(progn
+					;				(setq novoValor (vl-string-subst  "/1" "/600" valor2))
+					;				(corrigir_valores (+ contador1 1) obj novoValor )
+					;			)
+					;		)
+					;	)
+					;)
+					
+					(if (or
+						(= (retorna_attrib obj contador1) "EQUALIZADOR")
+						(= (retorna_attrib obj contador1) "ACOPLADOR")
+						(= (retorna_attrib obj contador1) "TAP") )
 						(progn
-							;(setq valor1 (strcase (vl-string-trim " " valor1)))
-							;(if (= valor1 "PIN-F/600")
-							;	(progn
-							;		(corrigir_valores contador1 obj "-" )
-							;		(if (or (= contador1 3) (= contador1 4) )
-							;			(progn
-							;				(corrigir_valores 2 obj "ACOPLADOR")
-							;			)
-							;		)
-							;		(if (or (= contador1 6) (= contador1 7) )
-							;			(progn
-							;				(corrigir_valores 5 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 9) (= contador1 10) )
-							;			(progn
-							;				(corrigir_valores 8 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 12) (= contador1 13) )
-							;			(progn
-							;				(corrigir_valores 11 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 15) (= contador1 16) )
-							;			(progn
-							;				(corrigir_valores 14 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 18) (= contador1 19) )
-							;			(progn
-							;				(corrigir_valores 17 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 21) (= contador1 22) )
-							;			(progn
-							;				(corrigir_valores 20 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 24) (= contador1 25) )
-							;			(progn
-							;				(corrigir_valores 23 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;		(if (or (= contador1 27) (= contador1 28) )
-							;			(progn
-							;				(corrigir_valores 26 obj "ACOPLADOR" )
-							;			)
-							;		)
-							;	)
-							;)
+							;passivo
+							;antigo
+							(setq valor2 (retorna_attrib obj (+ contador1 1)))
+							(if (/= (vl-string-search "/" valor2) nil)
+								(progn
+									(setq valor2_array (sparser valor2 "/"))
+									(setq tam2 (length valor2_array))
+									(if (> tam2 1)
+										(progn
+											(setq ultimoel (nth (- tam2 1) valor2_array))
+											(setq tamString (strlen ultimoel)) ;Tamanho da última string  2000 = 4
+											(setq tamTotal (strlen valor2)) ;Tamanho do texto total  1/6/2000
+											
+											(setq stringSemu (substr  valor2 1 (- tamTotal tamString) )) ;Gera a string sem o último elemento 1/6/
+											
+											
+											;(setq novoValor (vl-string-subst  (strcat "/" pantigo ) (strcat "/" ultimoel ) valor2))
+											(corrigir_valores (+ contador1 1) obj (strcat stringSemu pantigo) )
+										)
+									)
+									
+								)
+							)
+							
+							;passivo
+							;novo
+							(setq valor2 (retorna_attrib obj (+ contador1 2)))
+							(if (/= (vl-string-search "/" valor2) nil)
+								(progn
+									(setq valor2_array (sparser valor2 "/"))
+									(setq tam2 (length valor2_array))
+									(if (> tam2 1)
+										(progn
+											(setq ultimoel (nth (- tam2 1) valor2_array))
+											(setq tamString (strlen ultimoel)) ;Tamanho da última string  2000 = 4
+											(setq tamTotal (strlen valor2)) ;Tamanho do texto total  1/6/2000
+											
+											(setq stringSemu (substr  valor2 1 (- tamTotal tamString) )) ;Gera a string sem o último elemento 1/6/
+											
+											
+											;(setq novoValor (vl-string-subst  (strcat "/" pantigo ) (strcat "/" ultimoel ) valor2))
+											(corrigir_valores (+ contador1 2) obj (strcat stringSemu pnovo) )
+										)
+									)
+									
+								)
+							)
+							
+							
 						)
 					)
 					
-					(if (or (= valor1 "ACOPLADOR") (= valor1 "TAP") )
+					
+					
+					
+					(if (= (retorna_attrib obj contador1) "AMPLIFICADOR") 
 						(progn
+							;ativo
+							;antigo
 							(setq valor2 (retorna_attrib obj (+ contador1 1)))
-							(if (/= valor2 "PIN-F/600")
+							(if (/= (vl-string-search "/" valor2) nil)
 								(progn
-									(setq novoValor (vl-string-subst  "/1" "/600" valor2))
-									(corrigir_valores (+ contador1 1) obj novoValor )
+									(setq valor2_array (sparser valor2 "/"))
+									(setq tam2 (length valor2_array))
+									(if (> tam2 1)
+										(progn
+											(setq ultimoel (nth (- tam2 1) valor2_array))
+											(setq tamString (strlen ultimoel)) ;Tamanho da última string  2000 = 4
+											(setq tamTotal (strlen valor2)) ;Tamanho do texto total  1/6/2000
+											
+											(setq stringSemu (substr  valor2 1 (- tamTotal tamString) )) ;Gera a string sem o último elemento 1/6/
+											
+											
+											;(setq novoValor (vl-string-subst  (strcat "/" pantigo ) (strcat "/" ultimoel ) valor2))
+											(corrigir_valores (+ contador1 1) obj (strcat stringSemu aantigo) )
+										)
+									)
+									
 								)
 							)
+							
+							;ativo
+							;novo
+							(setq valor2 (retorna_attrib obj (+ contador1 2)))
+							(if (/= (vl-string-search "/" valor2) nil)
+								(progn
+									(setq valor2_array (sparser valor2 "/"))
+									(setq tam2 (length valor2_array))
+									(if (> tam2 1)
+										(progn
+											(setq ultimoel (nth (- tam2 1) valor2_array))
+											(setq tamString (strlen ultimoel)) ;Tamanho da última string  2000 = 4
+											(setq tamTotal (strlen valor2)) ;Tamanho do texto total  1/6/2000
+											
+											(setq stringSemu (substr  valor2 1 (- tamTotal tamString) )) ;Gera a string sem o último elemento 1/6/
+											
+											
+											;(setq novoValor (vl-string-subst  (strcat "/" pantigo ) (strcat "/" ultimoel ) valor2))
+											(corrigir_valores (+ contador1 2) obj (strcat stringSemu anovo) )
+										)
+									)
+									
+								)
+							)
+							
+							
+							
 						)
 					)
+					
+					
 					
 					(setq contador1 (+ contador1 1))
 				)
@@ -323,11 +386,65 @@
 	
 )
 
+
+(defun string_null(sss)
+	(setq sss (vl-string-trim " " sss))
+	(if (= sss "")
+		(progn
+			(setq resp1 nil)
+		)
+		(progn
+			(setq resp1 1)
+		)
+	)
+)
+
 (defun c:corrige_tap_acoplador()
 	(setvar "cmdecho" 0)
 	(command "_osnap" "none")
 	(vl-load-com)
-	(percorre_elementos)
 	
+	(setq pantigo "")
+	(setq pnovo "")
+	(setq aantigo "")
+	(setq anovo "")
+	
+	;(while (= pantigo "")
+		(setq pantigo (vl-string-trim " " (getstring "\nPassivo - antigo: ")))
+	;	(if (= pantigo "")
+	;		(progn
+	;			(alert "O valo não pode estar vazio!")
+	;		)
+	;	)
+	;)
+	
+	;(while (= pnovo "")
+		(setq pnovo (vl-string-trim " "(getstring "\nPassivo - novo: ")))
+	;	(if (= pnovo "")
+	;		(progn
+	;			(alert "O valo não pode estar vazio!")
+	;		)
+	;	)
+	;)
+	
+	;(while (= aantigo "")
+		(setq aantigo (vl-string-trim " "(getstring "\nAtivo - antigo: ")))
+	;	(if (= aantigo "")
+	;		(progn
+	;			(alert "O valo não pode estar vazio!")
+	;		)
+	;	)
+	;)
+	
+	;(while (= anovo "")
+		(setq anovo (vl-string-trim " "(getstring "\nAtivo - novo: ")))
+	;	(if (= anovo "")
+	;		(progn
+	;			(alert "O valo não pode estar vazio!")
+	;		)
+	;	)
+	;)
+	
+	(percorre_elementos)
 	(princ)
 )

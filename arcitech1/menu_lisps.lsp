@@ -58,7 +58,7 @@
 		(princ "\n[11] - BATCHLISP")
 		(princ "\n[12] - Verifica erro de digitação")
 		(princ "\n[13] - Amplificadores / Conectores / Ks. Contagem")
-		(princ "\n[14] - Corrige tap acoplador")
+		(princ "\n[14] - Corrige tap acoplador - Passivo/Ativo")
 		(princ "\n[15] - Alert cabos 500, e 750")
 		
 		

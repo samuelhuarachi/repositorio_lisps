@@ -75,7 +75,16 @@
 		(setq tam1 (- tam1 1))
 	)
 	
-	(alert  mensagem  )
+	(if (= lista_soma_cabos nil)
+		(progn
+			(alert "Nenhum elemento encontrado!")
+		)
+		(progn
+			(alert  mensagem  )
+		)
+	)
+	
+	
 	
 	
 	(princ)
